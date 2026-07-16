@@ -1,0 +1,11 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# WorkBuddy internal data (if present)
+.workbuddy/
+
+# Empty assets folder (no exported resources yet)
+assets/
