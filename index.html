@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>暖心 Todo - 移动端App</title>
+<style>
+:root{--primary:#5BA898;--primary-light:rgba(91,168,152,0.12);--bg:#F7F6F3;--bg-card:#FFFFFF;--bg-overlay:rgba(0,0,0,0.35);--text-primary:#1A1A1A;--text-secondary:#5C5C5C;--text-tertiary:#999999;--text-placeholder:#CCCCCC;--text-inverse:#FFFFFF;--border:#E6E0DB;--accent-orange:#D4A574;--accent-red:#C2624A;--accent-amber:#C08A4A;--radius-page:32px;--radius-card:16px;--radius-card-lg:20px;--radius-input:14px;--radius-button:26px;--radius-chip:20px;--radius-pill:15px;--pad-page:24px;--fs-xs:12px;--fs-sm:13px;--fs-base:14px;--fs-md:15px;--fs-lg:17px;--fs-xl:20px;--fs-2xl:22px;--fs-3xl:24px;--fs-4xl:26px;--fs-5xl:36px;--shadow-card:0 2px 8px rgba(0,0,0,0.04);--shadow-modal:0 8px 24px rgba(0,0,0,0.12);--shadow-fab:0 4px 12px rgba(91,168,152,0.3);--phone-w:360px;--phone-h:798px}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:"Sarasa Gothic SC","PingFang SC","Microsoft YaHei",-apple-system,BlinkMacSystemFont,sans-serif;font-size:var(--fs-base);color:var(--text-primary);background:#1a1a2e;overflow:hidden;height:100vh;width:100vw;-webkit-font-smoothing:antialiased}
+body{display:flex;align-items:center;justify-content:center}
+.phone-frame{position:relative;width:var(--phone-w);height:var(--phone-h);background:var(--bg);border-radius:var(--radius-page);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);transform-origin:center center}
+@media (max-height:820px){.phone-frame{transform:scale(0.85)}}
+@media (max-height:700px){.phone-frame{transform:scale(0.7)}}
+@media (max-height:600px){.phone-frame{transform:scale(0.55)}}
+.page{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--bg);display:none;flex-direction:column;overflow:hidden}
+.page.active{display:flex}
+
+/* ===== AUTH PAGES ===== */
+.auth-page{background:linear-gradient(180deg,#E8F5F1 0%,#F7F6F3 40%)}
+.auth-header{display:flex;flex-direction:column;align-items:center;padding:44px 0 32px}
+.auth-logo{width:48px;height:48px;background:var(--primary);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:24px;color:#fff}
+.auth-title{font-size:28px;font-weight:700;font-family:"Inter Tight","Sarasa Gothic SC",sans-serif;color:var(--text-primary);margin-bottom:6px}
+.auth-subtitle{font-size:var(--fs-base);color:var(--text-tertiary)}
+.auth-form{padding:0 32px;display:flex;flex-direction:column;gap:16px}
+.auth-input{width:100%;height:52px;padding:0 16px;background:#fff;border:1px solid var(--border);border-radius:var(--radius-input);font-size:var(--fs-md);color:var(--text-primary);outline:none;font-family:inherit}
+.auth-input::placeholder{color:var(--text-placeholder)}
+.auth-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+.auth-btn{width:100%;height:52px;border:none;border-radius:var(--radius-button);font-size:var(--fs-lg);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;background:var(--primary);color:var(--text-inverse);transition:opacity 0.2s}
+.auth-btn:hover{opacity:0.9}
+.auth-btn-secondary{width:100%;height:52px;border:1.5px solid var(--border);border-radius:var(--radius-button);font-size:var(--fs-lg);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;background:transparent;color:var(--text-primary);gap:8px}
+.auth-bottom{padding:20px 32px;text-align:center;font-size:var(--fs-base);color:var(--text-tertiary)}
+.auth-bottom a{color:var(--primary);cursor:pointer;text-decoration:none;font-weight:600}
+.auth-divider{display:flex;align-items:center;gap:12px;padding:8px 0;color:var(--text-placeholder);font-size:var(--fs-sm)}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.agreement-row{display:flex;align-items:center;gap:8px;font-size:var(--fs-xs);color:var(--text-tertiary)}
+.agreement-row input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
+.agreement-row a{color:var(--primary);text-decoration:none}
+.success-page{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;gap:20px}
+.success-icon{width:80px;height:80px;background:var(--primary-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.success-icon svg{width:36px;height:36px}
+.success-title{font-size:var(--fs-3xl);font-weight:700;color:var(--text-primary)}
+.success-desc{font-size:var(--fs-base);color:var(--text-tertiary);line-height:1.6}
+
+/* ===== STATUS BAR ===== */
+.status-bar{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:14px;font-weight:600;color:var(--text-primary);flex-shrink:0;font-family:"Inter",sans-serif}
+.status-bar .icons{display:flex;align-items:center;gap:6px}
+
+/* ===== TOP BAR ===== */
+.top-bar{height:52px;display:flex;align-items:center;padding:0 16px;flex-shrink:0;position:relative}
+.top-bar .back-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-primary);background:none;border:none;font-size:22px;font-family:"Inter",sans-serif;border-radius:10px}
+.top-bar .back-btn:hover{background:rgba(0,0,0,0.04)}
+.top-bar .page-title{position:absolute;left:50%;transform:translateX(-50%);font-size:18px;font-weight:600;font-family:"Inter Tight","Sarasa Gothic SC",sans-serif;color:var(--text-primary)}
+.top-bar .top-action{position:absolute;right:16px;height:36px;padding:0 16px;border-radius:18px;font-size:14px;font-weight:600;cursor:pointer;background:var(--primary);color:var(--text-inverse);border:none;font-family:inherit;font-family:"Inter",sans-serif}
+.top-bar .calendar-nav{display:flex;align-items:center;gap:8px}
+
+/* ===== CONTENT AREA ===== */
+.content-area{flex:1;overflow-y:auto;padding:0 var(--pad-page)}
+.content-area.no-pad{padding:0}
+
+/* ===== HOME PAGE ===== */
+.home-header{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0 20px;position:relative;z-index:1}
+.greeting-col{display:flex;flex-direction:column;gap:4px}
+.greeting{font-size:22px;font-weight:600;font-family:"Inter Tight","Sarasa Gothic SC",sans-serif;color:var(--text-primary)}
+.home-date{font-size:13px;color:var(--text-secondary);font-family:"Inter",sans-serif}
+.custom-msg{font-size:13px;color:var(--primary)}
+.home-avatar{width:44px;height:44px;border-radius:22px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.home-avatar svg{width:24px;height:24px}
+.home-avatar .head{fill:#fff}
+.section-card{background:var(--bg-card);border-radius:var(--radius-card-lg);overflow:hidden}
+.section-header{cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:16px 16px 12px}
+.section-header-left{display:flex;align-items:center;gap:12px;flex:1}
+.section-icon{width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.section-icon.todo{background:rgba(91,168,152,0.15)}
+.section-icon.todo svg{color:var(--primary)}
+.section-icon.habit{background:rgba(192,138,74,0.15)}
+.section-icon.habit svg{color:var(--accent-amber)}
+.section-text{display:flex;flex-direction:column;gap:4px}
+.section-title{font-size:17px;font-weight:700;font-family:"Sarasa Gothic SC",sans-serif;color:var(--text-primary)}
+.section-subtitle{font-size:13px;color:var(--text-tertiary)}
+.section-arrow{color:#A8A29E;width:14px;height:14px;flex-shrink:0}
+.section-body{padding:0 16px 16px}
+.todo-item,.habit-item{display:flex;align-items:flex-start;padding:8px 8px 8px 0;gap:12px;position:relative}
+.todo-item+.todo-item,.habit-item+.habit-item{border-top:1px solid #F5F2EE}
+.todo-check{width:22px;height:22px;border-radius:50%;border:2px solid #C9C3BA;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;margin-top:2px}
+.todo-check.done{background:var(--primary);border-color:var(--primary)}
+.todo-check.done::after{content:'✓';color:#fff;font-size:12px;font-weight:700}
+.todo-check.habit-done{background:var(--primary);border-color:var(--primary)}
+.todo-check.habit-done::after{content:'✓';color:#fff;font-size:12px;font-weight:700}
+.todo-info{flex:1;min-width:0}
+.todo-name{font-size:15px;font-weight:600;font-family:"Sarasa Gothic SC",sans-serif;color:var(--text-primary);line-height:1.3}
+.todo-name.done-text{color:var(--text-tertiary);text-decoration:line-through}
+.todo-meta{font-size:12px;color:var(--text-tertiary);margin-top:2px;display:flex;align-items:center;gap:8px}
+.todo-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;color:var(--primary)}
+.todo-tag.tag-client{background:rgba(91,168,152,0.12);color:var(--primary)}
+.todo-tag.tag-launch{background:rgba(192,138,74,0.12);color:var(--accent-amber)}
+.todo-tag.tag-review{background:rgba(194,98,74,0.12);color:var(--accent-red)}
+.quadrant-dots{display:grid;grid-template-columns:7px 7px;grid-template-rows:7px 7px;gap:2px;flex-shrink:0}
+.quadrant-dots span{display:block;width:7px;height:7px;border-radius:1px;background:#E4DED5}
+.quadrant-dots span.active{background:var(--accent-red)}
+.fab-btn{position:absolute;bottom:82px;right:42px;width:56px;height:56px;border-radius:28px;background:var(--primary);box-shadow:var(--shadow-fab);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:50;transition:transform 0.2s}
+.fab-btn:hover{transform:scale(1.05)}
+.fab-btn svg{width:24px;height:24px;color:#fff}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;height:62px;background:var(--bg-card);display:flex;align-items:flex-start;justify-content:space-around;padding-top:4px;border-top:1px solid var(--border);z-index:100;border-radius:0 0 32px 32px}
+.nav-tab{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--text-tertiary);font-size:10px;background:none;border:none;padding:4px 8px;font-family:"Inter","DM Sans",sans-serif;border-radius:24px;min-width:62px;transition:all 0.2s;position:relative}
+.nav-tab.active{color:#fff;background:var(--primary)}
+.nav-tab.active svg{color:#fff}
+.nav-tab svg{width:18px;height:18px;color:var(--text-tertiary);transition:color 0.2s}
+
+/* ===== ADD TODO PAGE ===== */
+.form-card{background:var(--bg-card);border-radius:var(--radius-card-lg);padding:16px;margin-bottom:16px}
+.form-label{font-size:16px;font-weight:600;font-family:"Inter Tight","Sarasa Gothic SC",sans-serif;color:var(--text-primary);margin-bottom:12px}
+.form-input{width:100%;height:42px;padding:0 14px;background:#F4F1EC;border:none;border-radius:14px;font-size:14px;color:var(--text-primary);outline:none;font-family:inherit}
+.form-input::placeholder{color:#A8A29A}
+.type-label{font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:10px}
+.type-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.type-chip{height:31px;padding:0 12px;border-radius:16px;font-size:13px;font-weight:500;font-family:"Inter",sans-serif;cursor:pointer;border:none;display:flex;align-items:center;gap:4px;transition:all 0.2s}
+.type-chip.selected{background:var(--primary);color:#fff}
+.type-chip:not(.selected){background:#fff;color:var(--text-primary);border:1.5px solid #E1DCD2}
+.type-chip .chip-delete{width:14px;height:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0.8}
+.type-chip .chip-delete:hover{opacity:1}
+.type-chip .chip-add{width:13px;height:13px;stroke:var(--primary)}
+.type-add-chip{background:#fff;border:1.5px solid var(--primary);color:var(--primary)}
+.quadrant-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quadrant-cell{border-radius:14px;padding:12px;cursor:pointer;border:1.5px solid #E1DCD2;background:#fff;display:flex;flex-direction:column;gap:4px;transition:all 0.2s}
+.quadrant-cell.selected{border-color:currentColor;background:rgba(91,168,152,0.05)}
+.quadrant-cell.selected.urgent-imp{border-color:var(--accent-red);background:rgba(194,98,74,0.05)}
+.quadrant-cell.urgent-imp{color:var(--accent-red)}
+.quadrant-cell.imp-not-urg{color:var(--primary)}
+.quadrant-cell.urgent-not-imp{color:var(--accent-amber)}
+.quadrant-cell.not-urg-not-imp{color:#8A857C}
+.quadrant-cell .qc-title{font-size:14px;font-weight:600;font-family:"Inter",sans-serif}
+.quadrant-cell .qc-desc{font-size:11px;opacity:0.7;font-family:"Inter",sans-serif}
+.divider-line{height:1px;background:#ECE8E1;margin:16px 0}
+.add-child-btn{width:100%;height:42px;border-radius:16px;border:1.5px solid var(--primary);background:#fff;color:var(--primary);font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+
+/* ===== CALENDAR PAGE ===== */
+.view-toggle{display:flex;background:#EDE9E2;border-radius:18px;padding:4px;gap:0}
+.view-toggle-btn{width:49px;height:29px;border-radius:14px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:"Inter",sans-serif;transition:all 0.2s}
+.view-toggle-btn.active{background:var(--primary);color:#fff}
+.view-toggle-btn:not(.active){background:transparent;color:var(--text-secondary)}
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin-bottom:12px}
+.cal-title{font-size:20px;font-weight:600;font-family:"Inter Tight","Sarasa Gothic SC",sans-serif;color:var(--text-primary);min-width:120px;text-align:center}
+.cal-nav{width:28px;height:28px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:18px}
+.weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:0 20px;margin-bottom:8px}
+.weekdays span{font-size:12px;color:var(--text-tertiary);font-family:"Inter",sans-serif;padding:4px 0}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:0 20px}
+.day-cell{display:flex;flex-direction:column;align-items:center;padding:4px 0 2px;min-height:60px;cursor:pointer;border-radius:10px;transition:background 0.2s;position:relative}
+.day-cell:hover{background:rgba(91,168,152,0.05)}
+.day-cell.today{background:var(--primary);border-radius:12px}
+.day-cell.today .day-num{color:#fff}
+.day-cell.other-month .day-num{color:#BAB4AC}
+.day-num{font-size:14px;font-weight:600;font-family:"Inter Tight",sans-serif;color:var(--text-primary);width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.day-dots{display:flex;flex-direction:column;gap:2px;width:100%;padding:0 2px;margin-top:2px}
+.prog-bar{height:4px;border-radius:2px;background:#E3DED5;width:100%;position:relative;overflow:hidden}
+.prog-bar .fill{height:100%;border-radius:2px;position:absolute;left:0;top:0}
+.prog-bar .fill.todo-fill{background:var(--primary)}
+.prog-bar .fill.habit-fill{background:var(--accent-amber)}
+
+/* ===== WEEK VIEW ===== */
+.week-scroll{display:flex;overflow-x:auto;padding:0 20px;gap:0}
+.week-day{min-width:51px;display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:6px;cursor:pointer;border-radius:12px}
+.week-day.today{background:rgba(91,168,152,0.1)}
+.week-day .wd-label{font-size:11px;color:var(--text-tertiary);font-family:"Inter",sans-serif}
+.week-day .wd-num{font-size:16px;font-weight:600;font-family:"Inter Tight",sans-serif;color:var(--text-primary)}
+.week-day.today .wd-num{color:var(--primary)}
+.week-tasks{padding:16px 20px}
+.week-task-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-card);border-radius:14px;margin-bottom:8px}
+.week-task-time{font-size:13px;color:var(--text-tertiary);font-family:"Inter",sans-serif;min-width:45px}
+.week-task-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.week-task-dot.todo-dot{background:var(--primary)}
+.week-task-dot.habit-dot{background:var(--accent-amber)}
+.week-task-name{font-size:14px;color:var(--text-primary);font-weight:500}
+
+/* ===== HABITS PAGE ===== */
+.habit-category{margin-bottom:20px}
+.habit-cat-title{font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.habit-cat-count{font-size:13px;color:var(--text-tertiary);font-weight:400}
+.habit-card{background:var(--bg-card);border-radius:var(--radius-card);padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.habit-card-icon{width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
+.habit-card-icon.meditate{background:#E8F5F1}
+.habit-card-icon.water{background:#EDF0FD}
+.habit-card-icon.read{background:#FFF3E6}
+.habit-card-icon.exercise{background:#FFECEC}
+.habit-card-info{flex:1;min-width:0}
+.habit-card-name{font-size:15px;font-weight:600;color:var(--text-primary)}
+.habit-card-streak{font-size:12px;color:var(--text-tertiary);margin-top:2px}
+.habit-card-progress{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary)}
+.habit-card-check{width:36px;height:36px;border-radius:50%;border:2px solid #C9C3BA;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;color:var(--primary)}
+.habit-card-check.done{background:var(--primary);border-color:var(--primary);color:#fff}
+.add-habit-btn{width:100%;height:48px;border-radius:24px;border:2px dashed #D4CFC7;background:transparent;color:var(--text-tertiary);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-family:inherit}
+.add-habit-btn:hover{border-color:var(--primary);color:var(--primary)}
+
+/* ===== NEW HABIT PAGE ===== */
+.form-section{margin-bottom:20px}
+.form-section-title{font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px}
+.icon-picker{display:flex;gap:10px;flex-wrap:wrap}
+.icon-option{width:48px;height:48px;border-radius:14px;background:var(--bg-card);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;transition:all 0.2s}
+.icon-option.selected{border-color:var(--primary);background:rgba(91,168,152,0.08)}
+.color-picker{display:flex;gap:8px}
+.color-dot{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all 0.2s}
+.color-dot.selected{border-color:var(--primary)}
+.reminder-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #F5F2EE}
+.reminder-row .label{font-size:15px;color:var(--text-primary)}
+.reminder-row .toggle{width:44px;height:24px;border-radius:12px;background:#D4CFC7;cursor:pointer;position:relative;transition:background 0.2s}
+.reminder-row .toggle.on{background:var(--primary)}
+.reminder-row .toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.15)}
+.reminder-row .toggle.on::after{left:22px}
+
+/* ===== OVERVIEW PAGE ===== */
+.overview-header{display:flex;align-items:center;gap:12px;padding:8px 0 20px}
+.overview-avatar{width:40px;height:40px;border-radius:20px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.overview-avatar svg{width:20px;height:20px}
+.overview-greet{font-size:16px;font-weight:600;color:var(--text-primary)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.stat-card{background:var(--bg-card);border-radius:var(--radius-card);padding:16px;display:flex;flex-direction:column;gap:8px}
+.stat-label{font-size:13px;color:var(--text-tertiary)}
+.stat-value{font-size:28px;font-weight:700;font-family:"Inter Tight",sans-serif;color:var(--text-primary)}
+.stat-value.highlight{color:var(--primary)}
+.stat-sub{font-size:12px;color:var(--text-tertiary)}
+.weekly-chart{background:var(--bg-card);border-radius:var(--radius-card-lg);padding:16px;margin-bottom:20px}
+.chart-title{font-size:16px;font-weight:600;margin-bottom:16px}
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:100px}
+.chart-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.chart-bar{width:100%;max-width:36px;border-radius:8px 8px 0 0;min-height:4px}
+.chart-bar.todo-color{background:var(--primary);opacity:0.7}
+.chart-bar.habit-color{background:var(--accent-amber);opacity:0.7}
+.chart-bar-label{font-size:10px;color:var(--text-tertiary)}
+
+/* ===== PROFILE PAGE ===== */
+.profile-header{display:flex;flex-direction:column;align-items:center;padding:20px 0 24px;gap:14px}
+.profile-avatar-lg{width:72px;height:72px;border-radius:36px;background:var(--primary);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.profile-avatar-lg svg{width:36px;height:36px}
+.profile-name{font-size:22px;font-weight:700}
+.profile-email{font-size:14px;color:var(--text-tertiary)}
+.menu-list{display:flex;flex-direction:column}
+.menu-item{display:flex;align-items:center;padding:16px 0;gap:14px;border-bottom:1px solid #F5F2EE;cursor:pointer}
+.menu-item:last-child{border-bottom:none}
+.menu-item-icon{width:20px;height:20px;color:var(--text-secondary);display:flex;align-items:center;justify-content:center}
+.menu-item-text{flex:1;font-size:15px;color:var(--text-primary)}
+.menu-item-arrow{color:#C9C9C9;font-size:14px}
+.logout-btn{width:100%;height:48px;border-radius:24px;border:1.5px solid var(--accent-red);background:transparent;color:var(--accent-red);font-size:15px;cursor:pointer;font-family:inherit;margin-top:24px;transition:all 0.2s}
+.logout-btn:hover{background:rgba(194,98,74,0.06)}
+
+/* ===== EDIT PROFILE ===== */
+.avatar-edit{display:flex;flex-direction:column;align-items:center;padding:16px 0 24px;gap:12px}
+.avatar-edit-img{width:80px;height:80px;border-radius:40px;background:var(--primary);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.avatar-edit-badge{position:absolute;bottom:0;right:0;width:26px;height:26px;background:var(--bg-card);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.1);font-size:14px}
+.edit-field{padding:14px 0;border-bottom:1px solid #F5F2EE}
+.edit-field-label{font-size:13px;color:var(--text-tertiary);margin-bottom:6px}
+.edit-field input,.edit-field textarea{width:100%;border:none;outline:none;font-size:15px;color:var(--text-primary);background:transparent;font-family:inherit;resize:none}
+.edit-field input::placeholder{color:var(--text-placeholder)}
+.gender-options{display:flex;gap:12px}
+.gender-opt{padding:8px 20px;border-radius:20px;border:1.5px solid var(--border);background:#fff;cursor:pointer;font-size:14px;color:var(--text-primary);transition:all 0.2s}
+.gender-opt.selected{border-color:var(--primary);background:rgba(91,168,152,0.08);color:var(--primary)}
+
+/* ===== MODALS & SHEETS ===== */
+.modal-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--bg-overlay);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal-box{background:var(--bg-card);border-radius:var(--radius-card-lg);padding:28px 24px 20px;width:calc(100% - 64px);max-width:300px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+.modal-icon{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px}
+.modal-icon.success{background:rgba(91,168,152,0.12);color:var(--primary)}
+.modal-icon.warning{background:rgba(194,98,74,0.1);color:var(--accent-red)}
+.modal-title{font-size:18px;font-weight:700}
+.modal-desc{font-size:14px;color:var(--text-tertiary);line-height:1.5}
+.modal-actions{display:flex;gap:12px;width:100%}
+.modal-btn{flex:1;height:44px;border-radius:22px;font-size:15px;font-weight:600;cursor:pointer;border:none;font-family:inherit}
+.modal-btn.confirm{background:var(--primary);color:#fff}
+.modal-btn.cancel{background:#F5F2EE;color:var(--text-secondary)}
+.bottom-sheet{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--bg-overlay);z-index:200;display:none;flex-direction:column;justify-content:flex-end}
+.bottom-sheet.active{display:flex}
+.sheet-content{background:var(--bg-card);border-radius:24px 24px 0 0;padding:24px 24px 32px;max-height:70%;overflow-y:auto;animation:slideUp 0.3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:36px;height:4px;background:#D4CFC7;border-radius:2px;margin:0 auto 20px}
+.sheet-option{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #F5F2EE;cursor:pointer;font-size:15px;color:var(--text-primary)}
+.sheet-option:last-child{border-bottom:none}
+.sheet-option.selected{color:var(--primary);font-weight:600}
+.sheet-option .check{width:20px;height:20px;color:var(--primary);display:none;flex-shrink:0}
+.sheet-option.selected .check{display:flex;align-items:center;justify-content:center}
+.sheet-cancel{width:100%;height:44px;border-radius:22px;background:#F5F2EE;border:none;color:var(--text-secondary);font-size:15px;cursor:pointer;font-family:inherit;margin-top:16px}
+
+/* ===== DAILY PLANNING PAGE ===== */
+.plan-timeline{position:relative;padding-left:24px}
+.plan-timeline::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:#E8E3DB}
+.plan-hour{display:flex;align-items:flex-start;gap:14px;padding:12px 0;position:relative}
+.plan-hour::before{content:'';position:absolute;left:-21px;top:18px;width:10px;height:10px;border-radius:50%;background:var(--bg-card);border:2px solid var(--primary);z-index:1}
+.plan-hour.done::before{background:var(--primary)}
+.plan-time{font-size:13px;color:var(--text-tertiary);min-width:42px;font-family:"Inter",sans-serif;padding-top:2px}
+.plan-task{flex:1;background:var(--bg-card);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--text-primary)}
+.plan-task.empty{background:transparent;color:var(--text-placeholder);font-style:italic;border:1px dashed #E8E3DB}
+
+/* ===== SELECT PAGES (Sheet-style pages) ===== */
+.select-list{display:flex;flex-direction:column}
+.select-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #F5F2EE;cursor:pointer}
+.select-item-check{width:22px;height:22px;border-radius:50%;border:2px solid #C9C3BA;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.select-item.checked .select-item-check{background:var(--primary);border-color:var(--primary)}
+.select-item.checked .select-item-check::after{content:'✓';color:#fff;font-size:12px;font-weight:700}
+.select-item .name{font-size:15px;color:var(--text-primary);flex:1}
+.select-item .count{font-size:13px;color:var(--text-tertiary)}
+.select-actions{padding:16px 0;display:flex;gap:12px}
+.select-btn{flex:1;height:44px;border-radius:22px;font-size:15px;font-weight:600;cursor:pointer;border:none;font-family:inherit}
+.select-btn.primary{background:var(--primary);color:#fff}
+.select-btn.secondary{background:#F5F2EE;color:var(--text-secondary)}
+</style>
+</head>
+<body>
+<div class="phone-frame" id="app">
+
+<!-- ========== SVG ICONS ========== -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<path id="icon-check" d="M5 11l3 3 8-8" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="icon-plus" d="M12 5v14M5 12h14" stroke-width="2" stroke-linecap="round"/>
+<path id="icon-chevron-right" d="M8 5l7 7-7 7" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</defs>
+</svg>
+
+<!-- ========== PAGE: login ========== -->
+<div class="page auth-page active" id="page-login">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">20:28</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A;margin-left:2px">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A" stroke-width="1"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="auth-header">
+<div class="auth-logo">&#10084;</div>
+<div class="auth-title">暖心 Todo</div>
+<div class="auth-subtitle">用心记录每一天</div>
+</div>
+<div class="auth-form">
+<input class="auth-input" type="email" placeholder="请输入邮箱" value="xiaolin@example.com">
+<input class="auth-input" type="password" placeholder="请输入密码" value="••••••••" style="font-size:20px;letter-spacing:3px">
+<button class="auth-btn" onclick="go('home')">登 录</button>
+<div class="auth-divider">或</div>
+<button class="auth-btn-secondary" onclick="go('register')">
+<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="none" stroke="#999" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-size="11" font-family="sans-serif" fill="#999">G</text></svg>
+使用 Google 登录
+</button>
+</div>
+<div class="auth-bottom">还没有账号？<a onclick="go('register')">立即注册</a></div>
+<div style="padding:16px 32px;text-align:center"><a onclick="go('forgot-password')" style="color:var(--text-tertiary);text-decoration:underline;font-size:14px;cursor:pointer">忘记密码？</a></div>
+</div>
+
+<!-- ========== PAGE: register ========== -->
+<div class="page auth-page" id="page-register">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">20:28</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A;margin-left:2px">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A" stroke-width="1"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="auth-header">
+<div class="auth-logo">&#10084;</div>
+<div class="auth-title">创建账号</div>
+<div class="auth-subtitle">开始你的暖心之旅</div>
+</div>
+<div class="auth-form">
+<input class="auth-input" type="text" placeholder="请输入昵称">
+<input class="auth-input" type="email" placeholder="请输入邮箱">
+<input class="auth-input" type="password" placeholder="请输入密码（至少8位）">
+<input class="auth-input" type="password" placeholder="请确认密码">
+<div class="agreement-row"><input type="checkbox" checked> 我已阅读并同意 <a href="#">《用户协议》</a> 和 <a href="#">《隐私政策》</a></div>
+<button class="auth-btn" onclick="go('register-success')">注 册</button>
+</div>
+<div class="auth-bottom">已有账号？<a onclick="go('login')">立即登录</a></div>
+</div>
+
+<!-- ========== PAGE: forgot-password ========== -->
+<div class="page auth-page" id="page-forgot-password">
+<div class="top-bar">
+<button class="back-btn" onclick="go('login')">&#8592;</button>
+<div class="page-title">忘记密码</div>
+</div>
+<div class="auth-header" style="padding-top:20px">
+<div class="auth-title" style="font-size:24px">重置密码</div>
+<div class="auth-subtitle">输入注册邮箱，我们将发送验证码</div>
+</div>
+<div class="auth-form">
+<input class="auth-input" type="email" placeholder="请输入注册邮箱">
+<button class="auth-btn" onclick="go('reset-success')">发送验证码</button>
+</div>
+</div>
+
+<!-- ========== PAGE: register-success ========== -->
+<div class="page auth-page" id="page-register-success">
+<div class="top-bar">
+<div class="page-title"></div>
+</div>
+<div class="success-page" style="flex:1">
+<div class="success-icon"><svg viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="16" fill="#5BA898"/><path d="M10 18l5 5 11-11" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<div class="success-title">注册成功！</div>
+<div class="success-desc">欢迎加入暖心 Todo<br>开始管理你的每一天</div>
+<button class="auth-btn" style="width:200px" onclick="go('home')">开始使用</button>
+</div>
+</div>
+
+<!-- ========== PAGE: reset-success ========== -->
+<div class="page auth-page" id="page-reset-success">
+<div class="top-bar">
+<div class="page-title"></div>
+</div>
+<div class="success-page" style="flex:1">
+<div class="success-icon"><svg viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="16" fill="#5BA898"/><path d="M10 18l5 5 11-11" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<div class="success-title">密码重置成功</div>
+<div class="success-desc">请使用新密码重新登录</div>
+<button class="auth-btn" style="width:200px" onclick="go('login')">返回登录</button>
+</div>
+</div>
+
+<!-- ========== PAGE: home (首页) ========== -->
+<div class="page" id="page-home" style="background:var(--bg)">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">20:28</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="content-area" style="padding-bottom:80px">
+<div class="home-header">
+<div class="greeting-col">
+<div class="greeting">晚上好，小林</div>
+<div class="home-date">7月13日 周一</div>
+<div class="custom-msg">今天也要加油呀</div>
+</div>
+<div class="home-avatar">
+<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" class="head"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="#fff"/></svg>
+</div>
+</div>
+
+<!-- Tasks section -->
+<div class="section-card" style="margin-bottom:16px">
+<div class="section-header" onclick="go('add-todo')">
+<div class="section-header-left">
+<div class="section-icon todo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></div>
+<div class="section-text">
+<div class="section-title">今日待办</div>
+<div class="section-subtitle">5 项待办 · 已完成 1 项</div>
+</div>
+</div>
+<svg class="section-arrow" viewBox="0 0 14 14"><path d="M4 6l3 3 3-3" stroke="#A8A29E" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</div>
+<div class="section-body">
+<div class="todo-item">
+<div class="todo-check done" onclick="this.classList.toggle('done')"></div>
+<div class="todo-info">
+<div class="todo-name done-text">回复客户邮件</div>
+<div class="todo-meta">已完成 <span class="todo-tag tag-client">客户邮件</span></div>
+</div>
+<div class="quadrant-dots"><span class="active"></span><span></span><span></span><span></span></div>
+</div>
+<div class="todo-item">
+<div class="todo-check" onclick="this.classList.toggle('done')"></div>
+<div class="todo-info">
+<div class="todo-name">撰写产品发布会演讲稿</div>
+<div class="todo-meta">18:00 · 重要紧急 <span class="todo-tag tag-launch">发布会</span></div>
+</div>
+<div class="quadrant-dots"><span></span><span class="active"></span><span></span><span></span></div>
+</div>
+<div class="todo-item">
+<div class="todo-check" onclick="this.classList.toggle('done')"></div>
+<div class="todo-info">
+<div class="todo-name">整理产品亮点文档</div>
+<div class="todo-meta">12:00 · 重要不紧急 <span class="todo-tag tag-launch">发布会</span></div>
+</div>
+<div class="quadrant-dots"><span class="active"></span><span></span><span></span><span></span></div>
+</div>
+<div class="todo-item">
+<div class="todo-check" onclick="this.classList.toggle('done')"></div>
+<div class="todo-info">
+<div class="todo-name">设计宣传物料</div>
+<div class="todo-meta">16:30 · 不重要紧急 <span class="todo-tag tag-launch">发布会</span></div>
+</div>
+<div class="quadrant-dots"><span></span><span></span><span></span><span class="active"></span></div>
+</div>
+<div class="todo-item">
+<div class="todo-check" onclick="this.classList.toggle('done')"></div>
+<div class="todo-info">
+<div class="todo-name">季度复盘报告</div>
+<div class="todo-meta">20:00 · 重要不紧急 <span class="todo-tag tag-review">季度复盘</span></div>
+</div>
+<div class="quadrant-dots"><span class="active"></span><span></span><span></span><span></span></div>
+</div>
+</div>
+</div>
+
+<!-- Habits section -->
+<div class="section-card" style="margin-bottom:16px">
+<div class="section-header" onclick="go('habits')">
+<div class="section-header-left">
+<div class="section-icon habit"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="12" r="7"/><circle cx="17" cy="8" r="5"/><path d="M13 6l3-3 4 4"/></svg></div>
+<div class="section-text">
+<div class="section-title">今日习惯</div>
+<div class="section-subtitle">6 个习惯 · 已打卡 2 个</div>
+</div>
+</div>
+<svg class="section-arrow" viewBox="0 0 14 14"><path d="M4 6l3 3 3-3" stroke="#A8A29E" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</div>
+<div class="section-body">
+<div class="habit-item">
+<div class="todo-check habit-done" onclick="this.classList.toggle('habit-done')"></div>
+<div class="todo-info">
+<div class="todo-name">晨间冥想</div>
+<div class="todo-meta">连续 7 天</div>
+</div>
+</div>
+<div class="habit-item">
+<div class="todo-check" onclick="this.classList.toggle('habit-done')"></div>
+<div class="todo-info">
+<div class="todo-name">喝水打卡</div>
+<div class="todo-meta">今日 2 / 8 杯</div>
+</div>
+</div>
+<div class="habit-item">
+<div class="todo-check habit-done" onclick="this.classList.toggle('habit-done')"></div>
+<div class="todo-info">
+<div class="todo-name">阅读30分钟</div>
+<div class="todo-meta">连续 21 天</div>
+</div>
+</div>
+<div class="habit-item">
+<div class="todo-check" onclick="this.classList.toggle('habit-done')"></div>
+<div class="todo-info">
+<div class="todo-name">运动锻炼</div>
+<div class="todo-meta">本周 3 / 5 次</div>
+</div>
+</div>
+<div class="habit-item">
+<div class="todo-check" onclick="this.classList.toggle('habit-done')"></div>
+<div class="todo-info">
+<div class="todo-name">早睡早起</div>
+<div class="todo-meta">平均 23:30 睡眠</div>
+</div>
+</div>
+<div class="habit-item">
+<div class="todo-check" onclick="this.classList.toggle('habit-done')"></div>
+<div class="todo-info">
+<div class="todo-name">记录日记</div>
+<div class="todo-meta">已坚持 12 天</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<button class="fab-btn" onclick="go('add-todo')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+
+<div class="bottom-nav">
+<button class="nav-tab active" onclick="go('home')"><svg viewBox="0 0 18 18" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="9" cy="9" r="3.5"/><path d="M1.5 9a7.5 7.5 0 0115 0"/></svg>今日</button>
+<button class="nav-tab" onclick="go('cal-month')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="12" height="11" rx="1"/><path d="M3 7.5h12"/><path d="M6 2.5v3M12 2.5v3"/></svg>日历</button>
+<button class="nav-tab" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
+<button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
+<button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+</div>
+</div>
+
+<!-- ========== PAGE: add-todo (添加待办) ========== -->
+<div class="page" id="page-add-todo" style="background:var(--bg)">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">14:04</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="top-bar">
+<button class="back-btn" onclick="go('home')">&#8592;</button>
+<div class="page-title">添加待办</div>
+<button class="top-action" onclick="go('home')">保存</button>
+</div>
+<div class="content-area" style="padding-bottom:80px">
+<div class="form-card">
+<div class="form-label">第一级待办</div>
+<input class="form-input" placeholder="请输入待办名称，如：准备季度汇报">
+<div class="type-label" style="margin-top:16px">任务类型（可删减 / 新增）</div>
+<div class="type-chips">
+<button class="type-chip selected">学习<span class="chip-delete">×</span></button>
+<button class="type-chip">生活</button>
+<button class="type-chip">健身</button>
+<button class="type-chip type-add-chip"><span class="chip-add">+</span>添加类型</button>
+</div>
+<div class="divider-line"></div>
+<div class="type-label" style="margin-top:4px">重要程度（四象限单选）</div>
+<div class="quadrant-grid">
+<div class="quadrant-cell selected urgent-imp">
+<div class="qc-title">重要紧急</div>
+<div class="qc-desc">优先处理</div>
+</div>
+<div class="quadrant-cell imp-not-urg">
+<div class="qc-title">重要不紧急</div>
+<div class="qc-desc">计划安排</div>
+</div>
+<div class="quadrant-cell urgent-not-imp">
+<div class="qc-title">不重要紧急</div>
+<div class="qc-desc">尽快委托</div>
+</div>
+<div class="quadrant-cell not-urg-not-imp">
+<div class="qc-title">不重要不紧急</div>
+<div class="qc-desc">有空再做</div>
+</div>
+</div>
+<div class="divider-line"></div>
+<button class="add-child-btn"><span style="font-size:18px">+</span> 添加子任务</button>
+</div>
+</div>
+</div>
+
+<!-- ========== PAGE: daily-planning (每日规划) ========== -->
+<div class="page" id="page-daily" style="background:var(--bg)">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">08:30</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="top-bar">
+<button class="back-btn" onclick="go('home')">&#8592;</button>
+<div class="page-title">每日规划</div>
+<button class="top-action" onclick="go('home')">保存</button>
+</div>
+<div class="content-area" style="padding-bottom:20px">
+<div style="font-size:20px;font-weight:600;font-family:Inter Tight,sans-serif;padding:12px 0 16px">7月13日 周一</div>
+<div class="plan-timeline">
+<div class="plan-hour done">
+<div class="plan-time">06:30</div>
+<div class="plan-task">晨间冥想 · 完成</div>
+</div>
+<div class="plan-hour">
+<div class="plan-time">08:00</div>
+<div class="plan-task">回复客户邮件</div>
+</div>
+<div class="plan-hour">
+<div class="plan-time">10:00</div>
+<div class="plan-task">产品发布会演讲稿撰写</div>
+</div>
+<div class="plan-hour">
+<div class="plan-time">12:00</div>
+<div class="plan-task">整理产品亮点文档</div>
+</div>
+<div class="plan-hour">
+<div class="plan-time">14:00</div>
+<div class="plan-task">设计宣传物料</div>
+</div>
+<div class="plan-hour">
+<div class="plan-time">16:00</div>
+<div class="plan-task empty">空闲时段</div>
+</div>
+<div class="plan-hour">
+<div class="plan-time">20:00</div>
+<div class="plan-task">季度复盘报告</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ========== PAGE: calendar-month (日历月视图) ========== -->
+<div class="page" id="page-cal-month" style="background:var(--bg)">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">14:37</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="top-bar">
+<button class="back-btn" onclick="go('home')">&#8592;</button>
+<div class="page-title">2026年7月</div>
+<div class="calendar-nav" style="position:absolute;right:16px">
+<button class="view-toggle-btn active" onclick="go('cal-month')" style="background:var(--primary);color:#fff;border:none;width:49px;height:29px;border-radius:14px;font-size:13px;cursor:pointer">月</button>
+<button class="view-toggle-btn" onclick="go('cal-week')" style="background:transparent;color:var(--text-secondary);border:none;width:49px;height:29px;border-radius:14px;font-size:13px;cursor:pointer">周</button>
+</div>
+</div>
+<div class="content-area no-pad" style="padding-top:12px">
+<div class="weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+<div class="month-grid">
+<div class="day-cell other-month"><div class="day-num">28</div></div>
+<div class="day-cell other-month"><div class="day-num">29</div></div>
+<div class="day-cell other-month"><div class="day-num">30</div></div>
+<div class="day-cell"><div class="day-num">1</div><div class="day-dots"><div class="prog-bar"><div class="fill todo-fill" style="width:50%"></div></div><div class="prog-bar"><div class="fill habit-fill" style="width:30%"></div></div></div></div>
+<div class="day-cell"><div class="day-num">2</div><div class="day-dots"><div class="prog-bar"><div class="fill todo-fill" style="width:30%"></div></div><div class="prog-bar"><div class="fill habit-fill" style="width:60%"></div></div></div></div>
+<div class="day-cell"><div class="day-num">3</div><div class="day-dots"><div class="prog-bar"><div class="fill todo-fill" style="width:70%"></div></div><div class="prog-bar"><div class="fill habit-fill" style="width:40%"></div></div></div></div>
+<div class="day-cell"><div class="day-num">4</div><div class="day-dots"><div class="prog-bar"><div class="fill todo-fill" style="width:20%"></div></div><div class="prog-bar"><div class="fill habit-fill" style="width:80%"></div></div></div></div>
+<div class="day-cell"><div class="day-num">5</div><div class="day-dots"><div class="prog-bar"><div class="fill todo-fill" style="width:45%"></div></div><div class="prog-bar"><div class="fill habit-fill" style="width:25%"></div></div></div></div>
+<div class="day-cell"><div class="day-num">6</div><div class="day-dots"><div class="prog-bar"><div class="fill todo-fill" style="width:60%"></div></div><div class="prog-bar"><div class="fill habit-fill" style="width:50%"></div></div></div></div>
+<div class="day-cell"><div class="day-num">7</div><div class="day-dots"><div class="prog-bar"><div class="fill todo-fill" style="width:80%"></div></div><div class="prog-bar"><div class="fill habit-fill" style="width:90%"></div></div></div></div>
+<div class="day-cell"><div class="day-num">8</div><div class="day-dots"><div class="prog-bar"><div class="fill todo-fill" style="width:15%"></div></div><div class="prog-bar"><div class="fill habit-fill" style="width:35%"></div></div></div></div>
+<div class="day-cell"><div class="day-num">9</div><div class="day-dots"><div class="prog-bar"><div class="fill todo-fill" style="width:55%"></div></div><div class="prog-bar"><div class="fill habit-fill" style="width:45%"></div></div></div></div>
+<div class="day-cell"><div class="day-num">10</div><div class="day-dots"><div class="prog-bar"><div class="fill todo-fill" style="width:40%"></div></div><div class="prog-bar"><div class="fill habit-fill" style="width:70%"></div></div></div></div>
+<div class="day-cell today"><div class="day-num">13</div><div class="day-dots"><div class="prog-bar"><div class="fill todo-fill" style="width:65%"></div></div><div class="prog-bar"><div class="fill habit-fill" style="width:55%"></div></div></div></div>
+<div class="day-cell"><div class="day-num">14</div></div><div class="day-cell"><div class="day-num">15</div></div><div class="day-cell"><div class="day-num">16</div></div><div class="day-cell"><div class="day-num">17</div></div>
+<div class="day-cell"><div class="day-num">18</div></div><div class="day-cell"><div class="day-num">19</div></div><div class="day-cell"><div class="day-num">20</div></div><div class="day-cell"><div class="day-num">21</div></div>
+<div class="day-cell"><div class="day-num">22</div></div><div class="day-cell"><div class="day-num">23</div></div><div class="day-cell"><div class="day-num">24</div></div><div class="day-cell"><div class="day-num">25</div></div>
+<div class="day-cell"><div class="day-num">26</div></div><div class="day-cell"><div class="day-num">27</div></div><div class="day-cell"><div class="day-num">28</div></div><div class="day-cell"><div class="day-num">29</div></div>
+<div class="day-cell"><div class="day-num">30</div></div><div class="day-cell other-month"><div class="day-num">31</div></div><div class="day-cell other-month"><div class="day-num">1</div></div>
+</div>
+</div>
+<div class="bottom-nav">
+<button class="nav-tab" onclick="go('home')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="3.5"/><path d="M1.5 9a7.5 7.5 0 0115 0"/></svg>今日</button>
+<button class="nav-tab active" onclick="go('cal-month')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="12" height="11" rx="1"/><path d="M3 7.5h12"/><path d="M6 2.5v3M12 2.5v3"/></svg>日历</button>
+<button class="nav-tab" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
+<button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
+<button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+</div>
+</div>
+
+<!-- ========== PAGE: calendar-week (日历周视图) ========== -->
+<div class="page" id="page-cal-week" style="background:var(--bg)">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">14:37</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="top-bar">
+<button class="back-btn" onclick="go('home')">&#8592;</button>
+<div class="page-title">2026年7月</div>
+<div class="calendar-nav" style="position:absolute;right:16px">
+<button class="view-toggle-btn" onclick="go('cal-month')" style="background:transparent;color:var(--text-secondary);border:none;width:49px;height:29px;border-radius:14px;font-size:13px;cursor:pointer">月</button>
+<button class="view-toggle-btn active" onclick="go('cal-week')" style="background:var(--primary);color:#fff;border:none;width:49px;height:29px;border-radius:14px;font-size:13px;cursor:pointer">周</button>
+</div>
+</div>
+<div class="content-area no-pad" style="padding-top:8px">
+<div class="week-scroll" style="margin-bottom:4px">
+<div class="week-day"><div class="wd-label">日 12</div><div class="wd-num">12</div></div>
+<div class="week-day"><div class="wd-label">一</div><div class="wd-num">13</div></div>
+<div class="week-day today"><div class="wd-label">二</div><div class="wd-num">14</div></div>
+<div class="week-day"><div class="wd-label">三</div><div class="wd-num">15</div></div>
+<div class="week-day"><div class="wd-label">四</div><div class="wd-num">16</div></div>
+<div class="week-day"><div class="wd-label">五</div><div class="wd-num">17</div></div>
+<div class="week-day"><div class="wd-label">六</div><div class="wd-num">18</div></div>
+</div>
+<div class="week-tasks">
+<div class="week-task-item"><span class="week-task-time">08:00</span><span class="week-task-dot todo-dot"></span><span class="week-task-name">回复客户邮件</span></div>
+<div class="week-task-item"><span class="week-task-time">10:00</span><span class="week-task-dot todo-dot"></span><span class="week-task-name">产品发布会演讲稿</span></div>
+<div class="week-task-item"><span class="week-task-time">12:00</span><span class="week-task-dot todo-dot"></span><span class="week-task-name">整理产品亮点文档</span></div>
+<div class="week-task-item"><span class="week-task-time">07:00</span><span class="week-task-dot habit-dot"></span><span class="week-task-name">晨间冥想</span></div>
+<div class="week-task-item"><span class="week-task-time">16:30</span><span class="week-task-dot todo-dot"></span><span class="week-task-name">设计宣传物料</span></div>
+<div class="week-task-item"><span class="week-task-time">20:00</span><span class="week-task-dot todo-dot"></span><span class="week-task-name">季度复盘报告</span></div>
+</div>
+</div>
+<div class="bottom-nav">
+<button class="nav-tab" onclick="go('home')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="3.5"/><path d="M1.5 9a7.5 7.5 0 0115 0"/></svg>今日</button>
+<button class="nav-tab active" onclick="go('cal-month')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="12" height="11" rx="1"/><path d="M3 7.5h12"/><path d="M6 2.5v3M12 2.5v3"/></svg>日历</button>
+<button class="nav-tab" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
+<button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
+<button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+</div>
+</div>
+
+<!-- ========== PAGE: habits (习惯展示) ========== -->
+<div class="page" id="page-habits" style="background:var(--bg)">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">09:15</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="top-bar">
+<button class="back-btn" onclick="go('home')">&#8592;</button>
+<div class="page-title">习惯打卡</div>
+<button class="top-action" onclick="go('new-habit')">+ 新建</button>
+</div>
+<div class="content-area" style="padding-bottom:80px">
+<div style="font-size:13px;color:var(--text-tertiary);padding:8px 0 16px">今日打卡 2/6</div>
+<div class="habit-category"><div class="habit-cat-title">&#127774; 早晨 <span class="habit-cat-count">2个习惯</span></div>
+<div class="habit-card"><div class="habit-card-icon meditate">&#129496;</div><div class="habit-card-info"><div class="habit-card-name">晨间冥想</div><div class="habit-card-streak">连续 7 天 · 06:30</div></div><div class="habit-card-check done" onclick="this.classList.toggle('done')">&#10003;</div></div>
+<div class="habit-card"><div class="habit-card-icon read">&#128214;</div><div class="habit-card-info"><div class="habit-card-name">阅读30分钟</div><div class="habit-card-streak">连续 21 天 · 07:00</div></div><div class="habit-card-check done" onclick="this.classList.toggle('done')">&#10003;</div></div>
+</div>
+<div class="habit-category"><div class="habit-cat-title">&#128167; 全天 <span class="habit-cat-count">2个习惯</span></div>
+<div class="habit-card"><div class="habit-card-icon water">&#128167;</div><div class="habit-card-info"><div class="habit-card-name">喝水打卡</div><div class="habit-card-streak">今日 2 / 8 杯</div></div><div class="habit-card-check" onclick="this.classList.toggle('done')">&#10003;</div></div>
+<div class="habit-card"><div class="habit-card-icon exercise">&#127939;</div><div class="habit-card-info"><div class="habit-card-name">运动锻炼</div><div class="habit-card-streak">本周 3 / 5 次 · 18:00</div></div><div class="habit-card-check" onclick="this.classList.toggle('done')">&#10003;</div></div>
+</div>
+<div class="habit-category"><div class="habit-cat-title">&#127747; 晚间 <span class="habit-cat-count">2个习惯</span></div>
+<div class="habit-card"><div class="habit-card-icon" style="background:#FFF0F5">&#127769;</div><div class="habit-card-info"><div class="habit-card-name">早睡早起</div><div class="habit-card-streak">平均 23:30 睡眠 · 06:30 起床</div></div><div class="habit-card-check" onclick="this.classList.toggle('done')">&#10003;</div></div>
+<div class="habit-card"><div class="habit-card-icon" style="background:#FFF8E7">&#9997;</div><div class="habit-card-info"><div class="habit-card-name">记录日记</div><div class="habit-card-streak">已坚持 12 天 · 22:00</div></div><div class="habit-card-check" onclick="this.classList.toggle('done')">&#10003;</div></div>
+</div>
+<button class="add-habit-btn" onclick="go('new-habit')"><span style="font-size:18px">+</span> 添加新习惯</button>
+</div>
+<div class="bottom-nav">
+<button class="nav-tab" onclick="go('home')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="3.5"/><path d="M1.5 9a7.5 7.5 0 0115 0"/></svg>今日</button>
+<button class="nav-tab" onclick="go('cal-month')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="12" height="11" rx="1"/><path d="M3 7.5h12"/><path d="M6 2.5v3M12 2.5v3"/></svg>日历</button>
+<button class="nav-tab active" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
+<button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
+<button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+</div>
+</div>
+
+<!-- ========== PAGE: new-habit (新建习惯) ========== -->
+<div class="page" id="page-new-habit" style="background:var(--bg)">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">15:22</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="top-bar">
+<button class="back-btn" onclick="go('habits')">&#8592;</button>
+<div class="page-title">新建习惯</div>
+<button class="top-action" onclick="go('habits')">保存</button>
+</div>
+<div class="content-area" style="padding-bottom:20px">
+<div class="form-section"><div class="form-section-title">习惯名称</div><input class="form-input" placeholder="请输入习惯名称"></div>
+<div class="form-section"><div class="form-section-title">选择图标</div>
+<div class="icon-picker">
+<div class="icon-option selected">&#129496;</div><div class="icon-option">&#128167;</div><div class="icon-option">&#128214;</div><div class="icon-option">&#127939;</div><div class="icon-option">&#127769;</div><div class="icon-option">&#9997;</div><div class="icon-option">&#127929;</div><div class="icon-option">&#127912;</div>
+</div></div>
+<div class="form-section"><div class="form-section-title">主题颜色</div>
+<div class="color-picker"><div class="color-dot selected" style="background:var(--primary)"></div><div class="color-dot" style="background:var(--accent-amber)"></div><div class="color-dot" style="background:var(--accent-red)"></div><div class="color-dot" style="background:#6B8DE3"></div><div class="color-dot" style="background:#9B6BE3"></div><div class="color-dot" style="background:#E36BA0"></div></div></div>
+<div class="form-section"><div class="form-section-title">提醒设置</div>
+<div class="reminder-row"><span class="label">每日提醒</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+<div class="reminder-row"><span class="label">提醒时间</span><span style="color:var(--text-secondary);font-size:15px">06:30</span></div>
+<div class="reminder-row"><span class="label">重复</span><span style="color:var(--text-secondary);font-size:15px">每天</span></div>
+</div>
+<div class="form-section"><div class="form-section-title">目标设置</div>
+<div class="reminder-row"><span class="label">每日目标</span><span style="color:var(--text-secondary);font-size:15px">1 次</span></div>
+<div class="reminder-row" style="border-bottom:none"><span class="label">目标时段</span><span style="color:var(--text-secondary);font-size:15px">早晨 (05:00-09:00)</span></div>
+</div>
+</div>
+</div>
+
+<!-- ========== PAGE: overview (总览) ========== -->
+<div class="page" id="page-overview" style="background:var(--bg)">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">15:35</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="content-area" style="padding-bottom:80px">
+<div class="overview-header">
+<div class="overview-avatar"><svg viewBox="0 0 20 20"><circle cx="10" cy="6" r="3.5" fill="#fff"/><path d="M3 17c0-3.9 3.1-7 7-7s7 3.1 7 7" fill="#fff"/></svg></div>
+<div class="overview-greet">你好，小林 &#128075;</div>
+</div>
+<div class="stat-grid">
+<div class="stat-card"><div class="stat-label">本月待办完成</div><div class="stat-value highlight">28</div><div class="stat-sub">完成率 72%</div></div>
+<div class="stat-card"><div class="stat-label">习惯打卡天数</div><div class="stat-value">13</div><div class="stat-sub">连续打卡 7 天</div></div>
+<div class="stat-card"><div class="stat-label">总待办事项</div><div class="stat-value">42</div><div class="stat-sub">已完成 28 · 进行中 14</div></div>
+<div class="stat-card"><div class="stat-label">总习惯</div><div class="stat-value">6</div><div class="stat-sub">坚持中 · 全部活跃</div></div>
+</div>
+<div class="weekly-chart">
+<div class="chart-title">本周完成情况</div>
+<div class="chart-bars">
+<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:65%"></div><div class="chart-bar-label">一</div></div>
+<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:80%"></div><div class="chart-bar-label">二</div></div>
+<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:45%"></div><div class="chart-bar-label">三</div></div>
+<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:90%"></div><div class="chart-bar-label">四</div></div>
+<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:55%"></div><div class="chart-bar-label">五</div></div>
+<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:30%"></div><div class="chart-bar-label">六</div></div>
+<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:20%"></div><div class="chart-bar-label">日</div></div>
+</div>
+</div>
+</div>
+<div class="bottom-nav">
+<button class="nav-tab" onclick="go('home')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="3.5"/><path d="M1.5 9a7.5 7.5 0 0115 0"/></svg>今日</button>
+<button class="nav-tab" onclick="go('cal-month')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="12" height="11" rx="1"/><path d="M3 7.5h12"/><path d="M6 2.5v3M12 2.5v3"/></svg>日历</button>
+<button class="nav-tab" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
+<button class="nav-tab active" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
+<button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+</div>
+</div>
+
+<!-- ========== PAGE: profile (我的) ========== -->
+<div class="page" id="page-profile" style="background:var(--bg)">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">16:10</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="content-area" style="padding-bottom:80px">
+<div class="profile-header">
+<div class="profile-avatar-lg"><svg viewBox="0 0 36 36"><circle cx="18" cy="12" r="7" fill="#fff"/><path d="M6 30c0-6.6 5.4-12 12-12s12 5.4 12 12" fill="#fff"/></svg></div>
+<div class="profile-name">小林</div>
+<div class="profile-email">xiaolin@example.com</div>
+</div>
+<div class="menu-list" style="background:var(--bg-card);border-radius:var(--radius-card);padding:0 16px">
+<div class="menu-item" onclick="go('edit-profile')"><span class="menu-item-icon">&#9998;</span><span class="menu-item-text">编辑资料</span><span class="menu-item-arrow">&#8250;</span></div>
+<div class="menu-item"><span class="menu-item-icon">&#128276;</span><span class="menu-item-text">通知设置</span><span class="menu-item-arrow">&#8250;</span></div>
+<div class="menu-item"><span class="menu-item-icon">&#128273;</span><span class="menu-item-text">隐私与安全</span><span class="menu-item-arrow">&#8250;</span></div>
+<div class="menu-item"><span class="menu-item-icon">&#128218;</span><span class="menu-item-text">帮助与反馈</span><span class="menu-item-arrow">&#8250;</span></div>
+<div class="menu-item"><span class="menu-item-icon">&#9881;</span><span class="menu-item-text">设置</span><span class="menu-item-arrow">&#8250;</span></div>
+</div>
+<button class="logout-btn">退出登录</button>
+</div>
+<div class="bottom-nav">
+<button class="nav-tab" onclick="go('home')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="3.5"/><path d="M1.5 9a7.5 7.5 0 0115 0"/></svg>今日</button>
+<button class="nav-tab" onclick="go('cal-month')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="12" height="11" rx="1"/><path d="M3 7.5h12"/><path d="M6 2.5v3M12 2.5v3"/></svg>日历</button>
+<button class="nav-tab" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
+<button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
+<button class="nav-tab active" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+</div>
+</div>
+
+<!-- ========== PAGE: edit-profile (编辑资料) ========== -->
+<div class="page" id="page-edit-profile" style="background:var(--bg)">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">16:15</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="top-bar">
+<button class="back-btn" onclick="go('profile')">&#8592;</button>
+<div class="page-title">编辑资料</div>
+<button class="top-action" onclick="go('profile')">保存</button>
+</div>
+<div class="content-area">
+<div class="avatar-edit">
+<div class="avatar-edit-img"><svg viewBox="0 0 40 40"><circle cx="20" cy="13" r="9" fill="#fff"/><path d="M6 34c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#fff"/></svg></div>
+<div class="avatar-edit-badge">&#128247;</div>
+</div>
+<div class="edit-field"><div class="edit-field-label">昵称</div><input value="小林" placeholder="请输入昵称"></div>
+<div class="edit-field"><div class="edit-field-label">邮箱</div><input value="xiaolin@example.com" placeholder="请输入邮箱"></div>
+<div class="edit-field"><div class="edit-field-label">性别</div>
+<div class="gender-options" style="margin-top:6px"><div class="gender-opt selected">男</div><div class="gender-opt">女</div><div class="gender-opt">保密</div></div>
+</div>
+<div class="edit-field" style="border-bottom:none"><div class="edit-field-label">个性签名</div><textarea rows="2" placeholder="写一句个性签名吧..." style="padding:8px 0;width:100%;border:none;outline:none;font-size:15px;color:var(--text-primary);background:transparent;font-family:inherit;resize:none">用心生活，认真记录。</textarea></div>
+</div>
+</div>
+
+<!-- ========== MODAL: welcome-sheet (欢迎语弹层) ========== -->
+<div class="bottom-sheet" id="sheet-welcome">
+<div class="sheet-content">
+<div class="sheet-handle"></div>
+<div style="font-size:18px;font-weight:700;margin-bottom:16px;text-align:center">选择欢迎语</div>
+<div class="sheet-option selected"><span class="check">&#10003;</span> 今天也要加油呀</div>
+<div class="sheet-option"><span class="check">&#10003;</span> 又是元气满满的一天</div>
+<div class="sheet-option"><span class="check">&#10003;</span> 坚持就是胜利</div>
+<div class="sheet-option"><span class="check">&#10003;</span> 今天的你很棒</div>
+<div class="sheet-option"><span class="check">&#10003;</span> 慢慢来，会更快</div>
+<button class="sheet-cancel" onclick="closeSheet()">取消</button>
+</div>
+</div>
+
+<!-- ========== MODAL: todo-select (待办清单选择) ========== -->
+<div class="bottom-sheet" id="sheet-todo-select">
+<div class="sheet-content">
+<div class="sheet-handle"></div>
+<div style="font-size:18px;font-weight:700;margin-bottom:16px;text-align:center">选择待办清单</div>
+<div class="select-item checked" onclick="this.classList.toggle('checked')"><div class="select-item-check"></div><span class="name">工作事务</span><span class="count">12项</span></div>
+<div class="select-item checked" onclick="this.classList.toggle('checked')"><div class="select-item-check"></div><span class="name">个人成长</span><span class="count">8项</span></div>
+<div class="select-item" onclick="this.classList.toggle('checked')"><div class="select-item-check"></div><span class="name">生活琐事</span><span class="count">5项</span></div>
+<div class="select-item" onclick="this.classList.toggle('checked')"><div class="select-item-check"></div><span class="name">学习计划</span><span class="count">6项</span></div>
+<div class="select-actions"><button class="select-btn primary" onclick="document.getElementById('sheet-todo-select').classList.remove('active')">确认</button><button class="select-btn secondary" onclick="document.getElementById('sheet-todo-select').classList.remove('active')">取消</button></div>
+</div>
+</div>
+
+<!-- ========== MODAL: habit-select (今日习惯选择) ========== -->
+<div class="bottom-sheet" id="sheet-habit-select">
+<div class="sheet-content">
+<div class="sheet-handle"></div>
+<div style="font-size:18px;font-weight:700;margin-bottom:16px;text-align:center">选择今日习惯</div>
+<div class="select-item checked" onclick="this.classList.toggle('checked')"><div class="select-item-check"></div><span class="name">晨间冥想</span><span class="count">06:30</span></div>
+<div class="select-item checked" onclick="this.classList.toggle('checked')"><div class="select-item-check"></div><span class="name">喝水打卡</span><span class="count">全天</span></div>
+<div class="select-item" onclick="this.classList.toggle('checked')"><div class="select-item-check"></div><span class="name">阅读30分钟</span><span class="count">07:00</span></div>
+<div class="select-item" onclick="this.classList.toggle('checked')"><div class="select-item-check"></div><span class="name">运动锻炼</span><span class="count">18:00</span></div>
+<div class="select-item" onclick="this.classList.toggle('checked')"><div class="select-item-check"></div><span class="name">早睡早起</span><span class="count">22:00</span></div>
+<div class="select-item" onclick="this.classList.toggle('checked')"><div class="select-item-check"></div><span class="name">记录日记</span><span class="count">22:00</span></div>
+<div class="select-actions"><button class="select-btn primary" onclick="document.getElementById('sheet-habit-select').classList.remove('active')">确认</button><button class="select-btn secondary" onclick="document.getElementById('sheet-habit-select').classList.remove('active')">取消</button></div>
+</div>
+</div>
+
+<!-- ========== MODAL A: 删除确认弹窗 ========== -->
+<div class="modal-overlay" id="modal-delete">
+<div class="modal-box">
+<div class="modal-icon warning">&#9888;</div>
+<div class="modal-title">确认删除</div>
+<div class="modal-desc">删除后数据将无法恢复，确定要删除这个待办事项吗？</div>
+<div class="modal-actions">
+<button class="modal-btn cancel" onclick="document.getElementById('modal-delete').classList.remove('active')">取消</button>
+<button class="modal-btn confirm" style="background:var(--accent-red)" onclick="document.getElementById('modal-delete').classList.remove('active')">删除</button>
+</div>
+</div>
+</div>
+
+<!-- ========== MODAL B: 打卡成功弹窗 ========== -->
+<div class="modal-overlay" id="modal-checkin">
+<div class="modal-box">
+<div class="modal-icon success">&#10003;</div>
+<div class="modal-title">打卡成功！</div>
+<div class="modal-desc">今日已完成晨间冥想<br>连续打卡 7 天，继续保持！</div>
+<div class="modal-actions">
+<button class="modal-btn confirm" style="width:100%" onclick="document.getElementById('modal-checkin').classList.remove('active')">太棒了</button>
+</div>
+</div>
+</div>
+
+</div>
+<script>
+function go(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('active'));
+  document.querySelectorAll('.bottom-sheet').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('page-'+pageId);
+  if(el)el.classList.add('active');
+}
+function openModal(id){document.getElementById(id).classList.add('active')}
+function openSheet(id){document.getElementById(id).classList.add('active')}
+function closeSheet(){document.getElementById('sheet-welcome').classList.remove('active')}
+</script>
+</body>
+</html>
