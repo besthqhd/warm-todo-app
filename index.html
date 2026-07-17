@@ -303,6 +303,88 @@ body{display:flex;align-items:center;justify-content:center}
 .select-btn{flex:1;height:44px;border-radius:22px;font-size:15px;font-weight:600;cursor:pointer;border:none;font-family:inherit}
 .select-btn.primary{background:var(--primary);color:#fff}
 .select-btn.secondary{background:#F5F2EE;color:var(--text-secondary)}
+
+
+/* ===== AI ASSISTANT PAGE ===== */
+.ai-page{display:flex;flex-direction:column;height:100%;background:var(--bg)}
+.ai-header{display:flex;align-items:center;padding:12px 20px;gap:10px;border-bottom:1px solid var(--border);background:var(--bg-card);flex-shrink:0}
+.ai-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5BA898,#7BC4B8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700}
+.ai-title{font-size:16px;font-weight:700;font-family:"Sarasa Gothic SC";color:var(--text-primary)}
+.ai-status-dot{width:8px;height:8px;border-radius:50%;background:#4ADE80;flex-shrink:0}
+.ai-chat-area{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.chat-msg{max-width:85%;padding:12px 16px;border-radius:18px;font-size:14px;line-height:1.55;word-break:break-word}
+.chat-msg.user{background:var(--primary);color:#fff;align-self:flex-end;border-bottom-right-radius:5px}
+.chat-msg.bot{background:var(--bg-card);color:var(--text-primary);align-self:flex-start;border-bottom-left-radius:5px;border:1px solid #F0EBE3}
+.chat-msg .msg-time{font-size:11px;opacity:0.55;margin-top:5px;display:block}
+.chat-actions{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.chat-chip{height:28px;padding:0 12px;border-radius:14px;font-size:12px;font-weight:500;background:rgba(91,168,152,0.1);color:var(--primary);cursor:pointer;border:none;font-family:"Inter";transition:all 0.15s;display:inline-flex;align-items:center;gap:4px}
+.chat-chip:hover{background:rgba(91,168,152,0.2)}
+.typing-indicator{display:flex;gap:4px;padding:12px 18px;align-self:flex-start}
+.typing-indicator span{width:7px;height:7px;border-radius:50%;background:#C9C3BA;animation:bounce 1.2s infinite ease-in-out}
+.typing-indicator span:nth-child(2){animation-delay:0.15s}
+.typing-indicator span:nth-child(3){animation-delay:0.30s}@keyframes bounce{0%,80%,100%{transform:scale(0.7)}40%{transform:scale(1)}}
+
+/* ===== AI INPUT BAR ===== */
+.ai-input-bar{padding:10px 16px 22px;background:var(--bg-card);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.ai-input-bar input{flex:1;height:42px;padding:0 14px;background:#F4F1EC;border:none;border-radius:21px;font-size:14px;color:var(--text-primary);outline:none;font-family:inherit}
+.ai-input-bar input::placeholder{color:#A8A29A}
+.ai-send-btn{width:42px;height:42px;border-radius:50%;background:var(--primary);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity 0.2s}
+.ai-send-btn:hover{opacity:0.9}
+.ai-send-btn svg{width:18px;height:18px}
+
+/* ===== SETTINGS PAGE ===== */
+.settings-page .setting-group{margin-bottom:24px}
+.setting-group-label{font-size:13px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;padding:0 4px}
+.setting-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg-card);border-radius:14px;margin-bottom:8px}
+.setting-item-label{font-size:15px;font-weight:500;color:var(--text-primary)}
+.setting-item-desc{font-size:12px;color:var(--text-tertiary);margin-top:2px}
+.setting-input{width:100%;height:42px;padding:0 14px;background:#F4F1EC;border:1px solid var(--border);border-radius:14px;font-size:13px;color:var(--text-primary);outline:none;font-family:inherit;box-sizing:border-box}
+.setting-input:focus{border-color:var(--primary)}
+.setting-toggle{width:48px;height:28px;border-radius:14px;background:#E0DDD6;position:relative;cursor:pointer;transition:background 0.25s;flex-shrink:0}
+.setting-toggle.on{background:var(--primary)}
+.setting-toggle::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left 0.25s;box-shadow:0 1px 3px rgba(0,0,0,0.15)}
+.setting-toggle.on::after{left:23px}
+.setting-save-btn{width:100%;height:48px;border-radius:24px;background:var(--primary);color:#fff;font-size:16px;font-weight:600;border:none;cursor:pointer;margin-top:16px;font-family:inherit}
+.setting-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.9);background:rgba(26,26,26,0.92);color:#fff;padding:14px 28px;border-radius:14px;font-size:14px;z-index:9999;opacity:0;pointer-events:none;transition:all 0.3s}
+.setting-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+/* ===== SMART RECOMMENDATION CARD ===== */
+.recommendation-section{background:var(--bg-card);border-radius:var(--radius-card-lg);padding:16px;margin-bottom:14px}
+.rec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.rec-title{font-size:15px;font-weight:700;color:var(--text-primary)}
+.rec-badge{font-size:11px;padding:3px 10px;border-radius:10px;background:rgba(91,168,152,0.12);color:var(--primary);font-weight:600}
+.rec-list{display:flex;flex-direction:column;gap:8px}
+.rec-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(91,168,152,0.06);border-radius:12px;cursor:pointer;transition:background 0.2s}
+.rec-item:hover{background:rgba(91,168,152,0.12)}
+.rec-icon{width:32px;height:32px;border-radius:10px;background:rgba(91,168,152,0.15);display:flex;align-items:center;justify-content:center;font-size:16px}
+.rec-info{flex:1}
+.rec-name{font-size:14px;font-weight:600;color:var(--text-primary)}
+-rec-streak{font-size:12px;color:var(--text-tertiary)}
+.rec-action{font-size:12px;font-weight:600;color:var(--primary)}
+.rec-empty{text-align:center;padding:24px;color:var(--text-tertiary);font-size:13px;line-height:1.6}
+
+/* ===== EMOTIONAL ENCOURAGEMENT BANNER ===== */
+.encourage-banner{background:linear-gradient(135deg,rgba(91,168,152,0.08),rgba(212,165,116,0.08));border-radius:var(--radius-card-lg);padding:16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px}
+.encourage-icon{font-size:24px;flex-shrink:0;line-height:1}
+.encourage-text{font-size:14px;color:var(--text-primary);line-height:1.55;flex:1}
+.encourage-text strong{color:var(--primary)}
+
+/* ===== BOTTOM NAV — 6 TABS (updated) ===== */
+.bottom-nav{grid-template-columns:repeat(6,1fr)!important} /* override if grid */
+
+/* ===== API STATUS INDICATOR ===== */
+.api-status{font-size:11px;color:var(--text-tertiary);padding:4px 0;text-align:center}
+.api-status.connected{color:#4ADE80}
+.api-status.error{color:var(--accent-red)}
+
+/* ===== QUICK ACTION SUGGESTIONS ===== */
+.quick-suggests{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0}
+.quick-suggests button{height:32px;padding:0 12px;border-radius:16px;font-size:12px;background:rgba(91,168,152,0.09);color:var(--primary);border:1px solid rgba(91,168,152,0.2);cursor:pointer;font-family:"Inter";transition:all 0.15s}
+.quick-suggests button:hover{background:rgba(91,168,152,0.18)}
+
+/* ===== TODO CREATED BY AI ===== */
+.ai-created-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:8px;background:rgba(91,168,152,0.1);color:var(--primary);font-weight:500;margin-left:6px}
+
 </style>
 </head>
 <body>
@@ -550,6 +632,8 @@ body{display:flex;align-items:center;justify-content:center}
 <button class="nav-tab" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
 <button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
 <button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+
+<button class="nav-tab" onclick="go('ai')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2a5 5 0 00-5 5c0 2.5 1.5 4.5 3.5 5.5V14h3v-1.5C12.5 11.5 14 9.5 14 7a5 5 0 00-5-5z"/><path d="M7.5 15h3"/></svg>AI</button>
 </div>
 </div>
 
@@ -694,6 +778,8 @@ body{display:flex;align-items:center;justify-content:center}
 <button class="nav-tab" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
 <button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
 <button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+
+<button class="nav-tab" onclick="go('ai')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2a5 5 0 00-5 5c0 2.5 1.5 4.5 3.5 5.5V14h3v-1.5C12.5 11.5 14 9.5 14 7a5 5 0 00-5-5z"/><path d="M7.5 15h3"/></svg>AI</button>
 </div>
 </div>
 
@@ -737,6 +823,8 @@ body{display:flex;align-items:center;justify-content:center}
 <button class="nav-tab" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
 <button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
 <button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+
+<button class="nav-tab" onclick="go('ai')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2a5 5 0 00-5 5c0 2.5 1.5 4.5 3.5 5.5V14h3v-1.5C12.5 11.5 14 9.5 14 7a5 5 0 00-5-5z"/><path d="M7.5 15h3"/></svg>AI</button>
 </div>
 </div>
 
@@ -774,6 +862,8 @@ body{display:flex;align-items:center;justify-content:center}
 <button class="nav-tab active" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
 <button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
 <button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+
+<button class="nav-tab" onclick="go('ai')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2a5 5 0 00-5 5c0 2.5 1.5 4.5 3.5 5.5V14h3v-1.5C12.5 11.5 14 9.5 14 7a5 5 0 00-5-5z"/><path d="M7.5 15h3"/></svg>AI</button>
 </div>
 </div>
 
@@ -846,6 +936,8 @@ body{display:flex;align-items:center;justify-content:center}
 <button class="nav-tab" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
 <button class="nav-tab active" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
 <button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+
+<button class="nav-tab" onclick="go('ai')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2a5 5 0 00-5 5c0 2.5 1.5 4.5 3.5 5.5V14h3v-1.5C12.5 11.5 14 9.5 14 7a5 5 0 00-5-5z"/><path d="M7.5 15h3"/></svg>AI</button>
 </div>
 </div>
 
@@ -974,17 +1066,435 @@ body{display:flex;align-items:center;justify-content:center}
 </div>
 
 </div>
+
+<!-- ========== PAGE: ai-assistant (AI助手) ========== -->
+<div class="page" id="page-ai">
+<div class="ai-page">
+<div class="ai-header">
+  <div class="ai-avatar">暖</div>
+  <div>
+    <div class="ai-title">暖心 AI 助手</div>
+    <div class="api-status" id="apiStatus">未配置</div>
+  </div>
+  <div class="ai-status-dot"></div>
+</div>
+
+<div class="ai-chat-area" id="chatArea">
+  <!-- Welcome message -->
+  <div class="chat-msg bot">
+    你好呀！我是你的暖心 AI 助手 🌿<br><br>
+    我可以帮你：<br>
+    • 用自然语言创建待办（如「下周交季度汇报，帮我安排」）<br>
+    • 根据你的完成情况推荐今天该打卡的习惯<br>
+    • 回答关于你待办和习惯的问题<br>
+    • 在你需要的时候给你鼓励 💪<br><br>
+    <span class="msg-time">刚刚</span>
+    <div class="chat-actions">
+      <button class="chat-chip" onclick="quickAction('帮我安排今天的任务')">安排今日任务</button>
+      <button class="chat-chip" onclick="queryCompletion('这周我拖延了几次？')">查询完成情况</button>
+      <button class="chat-chip" onclick="recommendHabits()">智能推荐习惯</button>
+      <button class="chat-chip" onclick="encourageMe()">给我鼓励</button>
+    </div>
+  </div>
+</div>
+
+<div class="ai-input-bar">
+  <input type="text" id="aiInput" placeholder="试试说：帮我安排明天的任务..." onkeydown="if(event.key==='Enter')sendChat()">
+  <button class="ai-send-btn" onclick="sendChat()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+</div>
+
+<!-- Quick suggestions below input -->
+<div style="padding:0 16px 16px">
+  <div class="quick-suggests">
+    <button onclick="fillInput('帮我建一个待办：准备季度汇报')">建待办</button>
+    <button onclick="fillInput('我今天应该打卡哪些习惯？')">推荐习惯</button>
+    <button onclick="fillInput('我最近完成率怎么样？')">查进度</button>
+    <button onclick="fillInput('鼓励一下我')">求鼓励</button>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ========== PAGE: settings (设置/AI配置) ========== -->
+<div class="page settings-page" id="page-settings">
+<div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">14:04</span><span class="icons" style="display:flex;gap:5px">
+<svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
+<span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
+<svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
+</span></div>
+<div class="top-bar">
+<button class="back-btn" onclick="go('profile')">&#8592;</button>
+<div class="page-title">AI 设置</div>
+</div>
+<div class="content-area" style="padding-bottom:80px">
+
+<div class="setting-group">
+  <div class="setting-group-label">API 配置</div>
+  <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">
+    <div>
+      <div class="setting-item-label">API 地址</div>
+      <div class="setting-item-desc">支持 OpenAI / DeepSeek / 本地模型等兼容接口</div>
+    </div>
+    <input class="setting-input" id="settingApiBase" placeholder="https://api.openai.com/v1" value="">
+  </div>
+  <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">
+    <div>
+      <div class="setting-item-label">API 密钥（Key）</div>
+      <div class="setting-item-desc">仅存储在本地浏览器，不会上传到任何服务器</div>
+    </div>
+    <input class="setting-input" type="password" id="settingApiKey" placeholder="sk-..." value="">
+  </div>
+  <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">
+    <div>
+      <div class="setting-item-label">模型名称（可选）</div>
+      <div class="setting-item-desc">留空则使用默认模型（gpt-4o-mini / deepseek-chat）</div>
+    </div>
+    <input class="setting-input" id="settingModel" placeholder="gpt-4o-mini" value="">
+  </div>
+</div>
+
+<div class="setting-group">
+  <div class="setting-group-label">功能开关</div>
+  <div class="setting-item">
+    <div>
+      <div class="setting-item-label">自然语言建待办</div>
+      <div class="setting-item-desc">用说话的方式创建待办任务</div>
+    </div>
+    <div class="setting-toggle on" id="toggleNLTodo" onclick="this.classList.toggle('on')"></div>
+  </div>
+  <div class="setting-item">
+    <div>
+      <div class="setting-item-label">智能习惯推荐</div>
+      <div class="setting-item-desc">根据历史完成情况推荐今日习惯</div>
+    </div>
+    <div class="setting-toggle on" id="toggleRecHabit" onclick="this.classList.toggle('on')"></div>
+  </div>
+  <div class="setting-item">
+    <div>
+      <div class="setting-item-label">主动提醒与情感鼓励</div>
+      <div class="setting-item-desc">根据完成情况发送温暖消息</div>
+    </div>
+    <div class="setting-toggle on" id="toggleEncourage" onclick="this.classList.toggle('on')"></div>
+  </div>
+</div>
+
+<div class="setting-group">
+  <div class="setting-group-label">数据管理</div>
+  <div class="setting-item" style="flex-direction:column;gap:6px">
+    <div class="setting-item-label">本地存储概览</div>
+    <div id="storageInfo" style="font-size:12px;color:var(--text-tertiary)">加载中...</div>
+  </div>
+  <button class="setting-btn-secondary" style="width:100%;height:42px;border-radius:21px;border:1.5px solid var(--accent-red);background:transparent;color:var(--accent-red);font-size:14px;cursor:pointer;font-family:inherit;margin-top:8px" onclick="if(confirm('确定清除所有本地数据？此操作不可恢复。')){localStorage.clear();location.reload()}">清除所有本地数据</button>
+</div>
+
+<button class="setting-save-btn" onclick="saveSettings()">保存设置</button>
+
+</div>
+<div class="bottom-nav">
+<button class="nav-tab" onclick="go('home')"><svg viewBox="0 0 18 18" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="9" cy="9" r="3.5"/><path d="M1.5 9a7.5 7.5 0 0115 0"/></svg>今日</button>
+<button class="nav-tab" onclick="go('cal-month')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="12" height="11" rx="1"/><path d="M3 7.5h12"/><path d="M6 2.5v3M12 2.5v3"/></svg>日历</button>
+<button class="nav-tab" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
+<button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
+<button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+<button class="nav-tab" onclick="go('ai')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2a5 5 0 00-5 5c0 2.5 1.5 4.5 3.5 5.5V14h3v-1.5C12.5 11.5 14 9.5 14 7a5 5 0 00-5-5z"/><path d="M7.5 15h3"/></svg>AI</button>
+</div>
+</div>
+
 <script>
-function go(pageId){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('active'));
-  document.querySelectorAll('.bottom-sheet').forEach(s=>s.classList.remove('active'));
-  const el=document.getElementById('page-'+pageId);
-  if(el)el.classList.add('active');
+// ===== DATA LAYER (localStorage) =====
+const DB = {
+  get(key, def=null){try{return JSON.parse(localStorage.getItem('wt_'+key))||def}catch(e){return def}},
+  set(key,val){localStorage.setItem('wt_'+key,JSON.stringify(val))},
+  todos(){return this.get('todos',[])},
+  habits(){return this.get('habits',[])},
+  completions(){return this.get('completions',{todo:{},habit:{}})},
+  addTodo(t){let ts=this.todos();t.id='td'+Date.now();t.created=new Date().toISOString();ts.push(t);this.set('todos',ts);return t},
+  addHabit(h){let hs=this.habits();h.id='hb'+Date.now();hs.push(h);this.set('habits',hs);return h},
+  recordComplete(type,id,dateStr=new Date().toISOString().slice(0,10)){let c=this.completions();if(!c[type])c[type]={};c[type][dateStr]=c[type][dateStr]||[];c[type][dateStr].push({ts:new Date().toISOString(),id});this.set('completions',c)},
+  // stats helpers
+  completionRate(days=7){
+    let c=this.completions(),total=0,done=0;
+    for(let i=0;i<days;i++){let d=new Date(Date.now()-i*864e5).toISOString().slice(0,10);
+      let td=(c.todo&&c.todo[d]||[]).length,hb=(c.habit&&c.habit[d]||[]).length;
+      total+=Math.max(td+hb,1);done+=td+hb;
+    }
+    return total?Math.round(done/total*100):0;
+  },
+  habitStreak(habitId){
+    let c=this.completions().habit||{},streak=0,d=new Date();
+    while(true){let ds=d.toISOString().slice(0,10);
+      if(c[ds]&&c[ds].some(x=>x.id===habitId))streak++;else break;d.setDate(d.getDate()-1);
+    }return streak;
+  }
+};
+
+// ===== SETTINGS =====
+function loadSettings(){
+  let s=DB.get('settings',{apiBase:'',apiKey:'',model:''});
+  document.getElementById('settingApiBase').value=s.apiBase||'';
+  document.getElementById('settingApiKey').value=s.apiKey||'';
+  document.getElementById('settingModel').value=s.model||'';
+  updateStorageInfo();
+  updateApiStatus();
 }
-function openModal(id){document.getElementById(id).classList.add('active')}
-function openSheet(id){document.getElementById(id).classList.add('active')}
-function closeSheet(){document.getElementById('sheet-welcome').classList.remove('active')}
+function saveSettings(){
+  DB.set('settings',{
+    apiBase:document.getElementById('settingApiBase').value.trim(),
+    apiKey:document.getElementById('settingApiKey').value.trim(),
+    model:document.getElementById('settingModel').value.trim()
+  });
+  showToast('设置已保存');
+  updateApiStatus();
+}
+function updateStorageInfo(){
+  let total=0;for(let i=0;i<localStorage.length;i++)total+=localStorage.getItem(localStorage.key(i)).length;
+  document.getElementById('storageInfo').textContent=
+    '待办 '+DB.todos().length+' 条 · 习惯 '+DB.habits().length+' 条 · 存储 '+Math.round(total/1024)+' KB';
+}
+function updateApiStatus(){
+  let s=DB.get('settings',{}),el=document.getElementById('apiStatus');
+  if(!s.apiKey){el.textContent='未配置';el.className='api-status';return}
+  el.textContent='已连接 ('+(s.model||'默认模型')+')';el.className='api-status connected';
+}
+function showToast(msg){
+  let t=document.createElement('div');t.className='setting-toast show';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.classList.remove('show'),2000);setTimeout(()=>t.remove(),2500);
+}
+
+// ===== LLM CLIENT =====
+async function callLLM(systemPrompt,userMsg){
+  let s=DB.get('settings',{}),base=(s.apiBase||'https://api.openai.com/v1').replace(/\/$/,''),model=s.model||(base.includes('deepseek')?'deepseek-chat':'gpt-4o-mini');
+  if(!s.apiKey)throw new Error('请先在「我的→AI 设置」中配置 API 密钥');
+
+  const body={model,messages:[
+    {role:'system',content:systemPrompt},
+    {role:'user',content:userMsg}
+  ],temperature:0.7,max_tokens:1024};
+
+  try{
+    let r=await fetch(base+'/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.apiKey},
+      body:JSON.stringify(body)
+    });
+    if(!r.ok)throw new Error('API 返回错误 '+r.status+' '+r.statusText);
+    let j=await r.json();
+    return j.choices?.[0]?.message?.content||'(无返回内容)';
+  }catch(e){throw e;}
+}
+
+// ===== CHAT UI =====
+function appendChat(text,isUser=false){
+  let area=document.getElementById('chatArea');
+  let div=document.createElement('div');
+  div.className='chat-msg '+(isUser?'user':'bot');
+  div.innerHTML=text.replace(/\n/g,'<br>')+'<span class="msg-time">'+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+'</span>';
+  area.appendChild(div);
+  area.scrollTop=area.scrollHeight;
+  return div;
+}
+function showTyping(){
+  let area=document.getElementById('chatArea');
+  let div=document.createElement('div');div.className='typing-indicator';div.id='typing';
+  div.innerHTML='<span></span><span></span><span></span>';
+  area.appendChild(div);area.scrollTop=area.scrollHeight;
+}
+function hideTyping(){let t=document.getElementById('typing');if(t)t.remove();}
+function timeNow(){return new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}
+
+// ===== MAIN CHAT SEND =====
+async function sendChat(){
+  let inp=document.getElementById('aiInput'),msg=inp.value.trim();
+  if(!msg)return;
+  inp.value='';
+  appendChat(msg,true);
+  showTyping();
+
+  // Detect intent: is it a todo creation request?
+  let isTodoRequest=/建|添加|新建|安排|待办|任务/.test(msg);
+
+  try{
+    let reply;
+    if(isTodoRequest){
+      reply=await handleNLCreateTodo(msg);
+    }else{
+      // General chat or query
+      let context=buildDataContext();
+      reply=await callLLM(
+        `你是暖心Todo应用的温暖治愈风AI助手。用简洁友好的中文回复。
+当前用户数据上下文：
+${context}
+规则：
+- 回复要简短、温暖、有同理心（像朋友聊天）
+- 如果涉及待办/习惯数据，基于上面提供的真实数据回答
+- 不要编造数据，没有就说还没有记录
+- 鼓励用户保持好的习惯`,
+        msg
+      );
+    }
+    hideTyping();
+    appendBotWithActions(reply);
+  }catch(e){
+    hideTyping();
+    appendChat('抱歉出了一点小问题 😅<br>'+e.message,false);
+  }
+}
+
+function appendBotWithActions(text){
+  let area=document.getElementById('chatArea');
+  let div=document.createElement('div');
+  div.className='chat-msg bot';
+  div.innerHTML=text.replace(/\n/g,'<br>')+
+    '<span class="msg-time">'+timeNow()+'</span>'+
+    '<div class="chat-actions">'+
+    '<button class="chat-chip" onclick="quickAction(\'继续\')">追问</button>'+
+    '<button class="chat-chip" onclick="recommendHabits()">推荐习惯</button>'+
+    '</div>';
+  area.appendChild(div);area.scrollTop=area.scrollHeight;
+}
+
+function fillInput(t){document.getElementById('aiInput').value=t;document.getElementById('aiInput').focus()}
+
+// ===== FEATURE 1: Natural Language Todo Creation =====
+async function handleNLCreateTodo(userMsg){
+  let systemPrompt=`你是暖心Todo的待办解析引擎。将用户的自然语言转换为结构化JSON。
+必须严格返回JSON格式，不要其他文字：
+{"name":"待办名称","type":"学习|生活|健身|工作","quadrant":"重要紧急|重要不紧急|不重要紧急|不重要不紧急","subtasks":["子任务1","子任务2"],"deadline":"可选的截止日期","note":"额外说明"}
+
+规则：
+- 四象限判断逻辑：有deadline且紧迫→重要紧急；重要但可计划→重要不紧急；琐碎但急→不重要紧急；都不满足→不重要不紧急
+- 类型根据关键词判断
+- subtasks拆分合理的子步骤
+- name要简洁有力`;
+
+  let raw=await callLLM(systemPrompt,userMsg);
+  // Extract JSON from response (may be wrapped in markdown code block)
+  let jsonMatch=raw.match(/\{[\s\S]*"name"[\s\S]*\}/);
+  if(!jsonMatch) throw new Error('无法解析待办信息，请换个方式描述');
+  let todo=JSON.parse(jsonMatch[0]);
+
+  // Save to localStorage
+  let created=DB.addTodo(todo);
+  DB.recordComplete('todo',created.id); // mark as "created"
+
+  return `✅ 已为你创建待办：\n\n**${todo.name}**\n`+
+    `类型：${todo.type || '通用'} | 优先级：${todo.quadrant}\n`+
+    (todo.subtasks?.length?`子任务：${todo.subtasks.join('、')}\n`:'')+
+    (todo.deadline?`截止：${todo.deadline}\n`:'')+
+    `\n需要调整的话随时告诉我~ 🌿`;
+}
+
+// ===== FEATURE 2: Smart Habit Recommendations =====
+async function recommendHabits(){
+  showTyping();
+  let habits=DB.habits();
+  if(!habits.length){
+    hideTyping();appendBotWithActions('你还没有创建任何习惯哦～去「习惯」页面添加一些吧！💚');return;
+  }
+
+  // Score each habit by streak + recent completion
+  let scored=habits.map(h=>{
+    let streak=DB.habitStreak(h.id);
+    let rate=DB.completionRate(7);
+    return {...h,streak,score:streak*3+(rate>=70?10:rate>=40?5:0)};
+  }).sort((a,b)=>b.score-a.score);
+
+  // Pick top 3
+  let top=scored.slice(0,3);
+  let list=top.map((h,i)=>`${i+1}. **${h.name}** — 连续 ${h.streak||0} 天`).join('\n');
+
+  hideTyping();
+  appendBotWithActions(`📋 根据你的完成情况，推荐今天打卡这些习惯：\n\n${list||'\n暂无习惯数据'}\n\n坚持就是胜利！✨`);
+}
+
+// ===== FEATURE 3: Natural Language Query =====
+async function queryCompletion(question){
+  document.getElementById('aiInput').value=question;
+  await sendChat();
+}
+
+// ===== FEATURE 4: Emotional Encouragement =====
+async function encourageMe(){
+  showTyping();
+  let rate=DB.completionRate(7),todosDone=DB.todos().filter(t=>t.done).length,todosTotal=DB.todos().length;
+
+  let encouragements={
+    high:[`太棒了！本周完成率 ${rate}%，你就是行动力达人！🎉 继续保持这个势头！`,`哇塞！你已经完成了 ${todosDone}/${todosTotal} 个待办，效率爆表！⭐ 今天也一起加油吧～`],
+    medium:[`这周完成率 ${rate}%，稳扎稳打！🌱 每一小步都在靠近更好的自己。`,`不错的节奏！已完成 ${todosDone} 个待办。休息一下也没关系，重要的是持续向前 👣`],
+    low:[`这周有点忙对吧？完成率 ${rate}% 也没关系 ❤️ 哪怕只完成一件小事也是进步。`,`嘿，别对自己太苛刻。今天挑一件最重要的小事完成它，就赢了！💪`]
+  };
+
+  let tier=rate>=70?'high':rate>=40?'medium':'low';
+  let pool=encouragements[tier];
+  let msg=pool[Math.floor(Math.random()*pool.length)];
+
+  hideTyping();
+  setTimeout(()=>{
+    appendBotWithActions(msg+'\n\n记住：重要的不是完美，而是持续 ✨');
+  },400);
+}
+
+// ===== Quick Actions =====
+async function quickAction(action){
+  document.getElementById('aiInput').value=action;
+  await sendChat();
+}
+
+// ===== Data Context Builder for LLM queries =====
+function buildDataContext(){
+  let todos=DB.todos(),habits=DB.habits(),comp=DB.completions(),
+    today=new Date().toISOString().slice(0,10),
+    todayTodos=(comp.todo&&comp.todo[today]||[]).length,
+    todayHabits=(comp.habit&&comp.habit[today]||[]).length;
+
+  return `- 今日完成：待办 ${todayTodos} 项 / 习惯打卡 ${todayHabits} 次\n`+
+    `- 待办总数：${todos.length}（已完成 ${todos.filter(t=>t.done).length}）\n`+
+    `- 习惯总数：${habits.length}\n`+
+    `- 近7天完成率：${DB.completionRate(7)}%\n`+
+    `- 最近待办：${todos.slice(-5).map(t=>t.name).join('、')||'无'}\n`+
+    `- 最近习惯：${habits.slice(-3).map(h=>h.name).join('、')||'无'}`;
+}
+
+// ===== INIT =====
+(function init(){
+  // Seed demo data if empty
+  if(DB.todos().length===0){
+    DB.addTodo({name:'准备季度汇报',type:'学习',quadrant:'重要紧急',subtasks:['收集数据','撰写PPT','演练'],done:false});
+    DB.addTodo({name:'阅读《原子习惯》第三章',type:'学习',quadrant:'重要不紧急',done:true});
+    DB.addTodo({name:'预约牙医',type:'生活',quadrant:'不重要紧急',done:false});
+  }
+  if(DB.habits().length===0){
+    DB.addHabit({name:'晨间冥想',icon:'🧘',color:'#5BA898'});
+    DB.addHabit({name:'阅读30分钟',icon:'📖',color:'#C08A4A'});
+    DB.addHabit({name:'运动锻炼',icon:'🏃',color:'#C2624A'});
+    DB.addHabit({name:'早睡早起',icon:'🌙',color:'#8A857C'});
+  }
+  // Simulate some history
+  for(let i=1;i<=5;i++){
+    let d=new Date(Date.now()-i*864e5).toISOString().slice(0,10);
+    DB.recordComplete('habit','hb'+(Date.now()%4+1),d);
+    if(i<=3)DB.recordComplete('todo','td'+(Date.now()%3+1),d);
+  }
+})();
+
+// Override go() to also update nav active state and load settings when needed
+const _origGo=go;
+window.go=function(pageId){
+  _origGo(pageId);
+  // Update all bottom-nav tabs active state
+  setTimeout(function(){
+    document.querySelectorAll('.bottom-nav .nav-tab').forEach(function(tab){
+      tab.classList.remove('active');
+      if(tab.getAttribute('onclick') && tab.getAttribute('onclick').includes("'"+pageId+"'")){
+        tab.classList.add('active');
+      }
+    });
+  },10);
+  if(pageId==='settings')setTimeout(loadSettings,50);
+  if(pageId==='ai')updateApiStatus();
+};
 </script>
 </body>
 </html>
