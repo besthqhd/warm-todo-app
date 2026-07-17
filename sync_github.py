@@ -22,6 +22,8 @@ FILES = [
     ("index.html", "index.html"),
     (".gitignore", ".gitignore"),
     ("PRD_暖心Todo.md", "PRD_暖心Todo.md"),
+    ("LICENSE", "LICENSE"),
+    ("README.md", "README.md"),
 ]
 
 def api_get(path):
