@@ -1479,7 +1479,19 @@ function buildDataContext(){
   }
 })();
 
-// Override go() to also update nav active state and load settings when needed
+// ===== CORE NAVIGATION (restored — was dropped during AI build) =====
+function go(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('active'));
+  document.querySelectorAll('.bottom-sheet').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('page-'+pageId);
+  if(el)el.classList.add('active');
+}
+function openModal(id){const el=document.getElementById(id);if(el)el.classList.add('active');}
+function openSheet(id){const el=id?document.getElementById(id):document.querySelector('.bottom-sheet');if(el)el.classList.add('active');}
+function closeSheet(id){const el=id?document.getElementById(id):document.querySelector('.bottom-sheet.active');if(el)el.classList.remove('active');}
+
+// Enhanced go(): also sync bottom-nav active state + lazy-load settings
 const _origGo=go;
 window.go=function(pageId){
   _origGo(pageId);
