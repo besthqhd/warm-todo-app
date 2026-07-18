@@ -376,6 +376,7 @@ body{display:flex;align-items:center;justify-content:center}
 .api-status{font-size:11px;color:var(--text-tertiary);padding:4px 0;text-align:center}
 .api-status.connected{color:#4ADE80}
 .api-status.error{color:var(--accent-red)}
+.rag-hint{font-size:11px;color:var(--text-tertiary);padding:5px 10px;margin:2px 0 6px;background:rgba(91,168,152,0.10);border-radius:10px;display:inline-block}
 
 /* ===== QUICK ACTION SUGGESTIONS ===== */
 .quick-suggests{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0}
@@ -1251,6 +1252,26 @@ body{display:flex;align-items:center;justify-content:center}
 </div>
 
 <div class="setting-group">
+  <div class="setting-group-label">RAG 检索增强</div>
+  <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">
+    <div>
+      <div class="setting-item-label">Embedding 模型</div>
+      <div class="setting-item-desc">留空默认 text-embedding-3-small（需接口支持 /embeddings）</div>
+    </div>
+    <input class="setting-input" id="settingEmbedModel" placeholder="text-embedding-3-small" value="">
+  </div>
+  <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">
+    <div>
+      <div class="setting-item-label">Embedding 接口地址</div>
+      <div class="setting-item-desc">留空则使用上方 API 地址；无此接口会自动降级为本地词法检索</div>
+    </div>
+    <input class="setting-input" id="settingEmbedBase" placeholder="留空 = API 地址" value="">
+  </div>
+  <button class="setting-btn-secondary" style="width:100%;height:40px;border-radius:20px;border:1.5px solid var(--primary);background:transparent;color:var(--primary);font-size:14px;cursor:pointer;font-family:inherit" onclick="ragRebuild()">重建检索索引</button>
+  <div id="ragStatus" style="font-size:12px;color:var(--text-tertiary);margin-top:4px"></div>
+</div>
+
+<div class="setting-group">
   <div class="setting-group-label">功能开关</div>
   <div class="setting-item">
     <div>
@@ -1351,10 +1372,12 @@ const DB = {
 
 // ===== SETTINGS =====
 function loadSettings(){
-  let s=DB.get('settings',{apiBase:'',apiKey:'',model:''});
+  let s=DB.get('settings',{apiBase:'',apiKey:'',model:'',embedModel:'',embedBase:''});
   document.getElementById('settingApiBase').value=s.apiBase||'';
   document.getElementById('settingApiKey').value=s.apiKey||'';
   document.getElementById('settingModel').value=s.model||'';
+  document.getElementById('settingEmbedModel').value=s.embedModel||'';
+  document.getElementById('settingEmbedBase').value=s.embedBase||'';
   updateStorageInfo();
   updateApiStatus();
   renderMemFacts();
@@ -1363,7 +1386,9 @@ function saveSettings(){
   DB.set('settings',{
     apiBase:document.getElementById('settingApiBase').value.trim(),
     apiKey:document.getElementById('settingApiKey').value.trim(),
-    model:document.getElementById('settingModel').value.trim()
+    model:document.getElementById('settingModel').value.trim(),
+    embedModel:document.getElementById('settingEmbedModel').value.trim(),
+    embedBase:document.getElementById('settingEmbedBase').value.trim()
   });
   showToast('设置已保存');
   updateApiStatus();
@@ -1429,7 +1454,9 @@ function timeNow(){return new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',
 async function callAgent(userMsg, opts={}){
   const data={todos:DB.todos(),habits:DB.habits(),completions:DB.completions()};
   const settings=DB.get('settings',{});
-  const body={messages:[{role:'user',content:userMsg}],settings,data,memory:buildMemory()};
+  const _rag=await ragRetrieve(userMsg);
+  const _ragCtx=_rag.length?ragFormat(_rag):'';
+  const body={messages:[{role:'user',content:userMsg}],settings,data,memory:buildMemory()+_ragCtx};
   if(opts.system)body.system=opts.system;
   if(opts.toolNames)body.tools=opts.toolNames;
   try{
@@ -1441,6 +1468,7 @@ async function callAgent(userMsg, opts={}){
     if(!r.ok) throw new Error('AGENT '+r.status);
     const j=await r.json();
     if(j.steps&&j.steps.length)renderAgentSteps(j.steps);
+    if(_rag.length)renderRagHint(_rag.length);
     if(j.data){
       DB.set('todos',j.data.todos||[]);
       DB.set('habits',j.data.habits||[]);
@@ -1554,7 +1582,7 @@ async function sendChat(){
       // General chat with long-context memory + recent conversation history.
       reply=await callLLM(
         `你是暖心Todo应用的温暖治愈风AI助手。用简洁友好的中文回复。
-${buildMemory()}
+${await buildMemoryAsync(msg)}
 规则：
 - 回复要简短、温暖、有同理心（像朋友聊天）
 - 结合上面的【长期记忆】了解用户，让回复更贴合ta的偏好与状态
@@ -1753,6 +1781,120 @@ function buildMemory(){
   var mtxt=lines.length?lines.join('\n'):'- （还不太了解这位用户，多聊聊就会更懂ta）';
   return '【长期记忆】\n'+mtxt+'\n\n【实时数据】\n'+buildDataContext();
 }
+// ===== RAG (context-layer retrieval) =====
+// 给 AI 注入"从历史里检索到的相关片段"，让回复基于真实历史而非泛泛而谈。
+// 语义检索（embedding）为主；无 embedding 接口时自动降级为 TF-IDF 词法检索。
+var _ragCache = null; // {hash, model, lexical, chunks:[{id,text,src,emb}]}
+
+function ragTok(t){
+  var toks = [];
+  var m, re = /[A-Za-z0-9]+/g;
+  while((m = re.exec(t))){ toks.push(m[0].toLowerCase()); }
+  var cjk = t.match(/[\u4e00-\u9fff]/g); if(cjk) toks = toks.concat(cjk);
+  var cn = t.match(/[\u4e00-\u9fff]{2,}/g);
+  if(cn){ cn.forEach(function(w){ for(var i=0;i+1<w.length;i++) toks.push(w.slice(i,i+2)); }); }
+  return toks;
+}
+function ragBuildCorpus(){
+  var out = [], i = 0;
+  function add(text, src){ if(!text||!text.trim())return; out.push({id:'c'+(i++),text:text.trim().slice(0,300),src:src||''}); }
+  var todos = DB.todos();
+  function pathOf(t){ var chain=[t.name], p=t.parent;
+    while(p){ var par=todos.find(function(x){return x.id===p;}); if(!par)break; chain.unshift(par.name); p=par.parent; }
+    return chain.join(' / '); }
+  todos.forEach(function(t){ add('待办：'+pathOf(t)+' ['+(t.quadrant||'')+'] '+(t.done?'已完成':'未完成'), '待办'); });
+  DB.habits().forEach(function(h){ add('习惯：'+h.name+' ['+(h.freq||'每日')+']', '习惯'); });
+  var c = DB.completions();
+  Object.keys(c.todo||{}).forEach(function(d){ add('待办打卡 '+d+'：'+(c.todo[d]||[]).length+' 项', '打卡'); });
+  Object.keys(c.habit||{}).forEach(function(d){ add('习惯打卡 '+d+'：'+(c.habit[d]||[]).length+' 项', '打卡'); });
+  var mem = DB.mem();
+  (mem.facts||[]).forEach(function(f){ add('关于用户：'+f, '记忆'); });
+  if(mem.mood) add('用户状态：'+mem.mood, '记忆');
+  DB.chatLog().slice(-20).forEach(function(m){ if(m&&m.content) add((m.role==='user'?'用户说':'AI说')+'：'+m.content.slice(0,200), '聊天'); });
+  return out;
+}
+function ragCorpusHash(corpus){
+  var s = corpus.map(function(x){return x.text;}).join('|');
+  var h = 0; for(var i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+  return 'h'+h;
+}
+async function ragEmbed(texts){
+  var s = DB.get('settings',{});
+  if(!s.apiKey) return null;
+  var base = (s.embedBase || s.apiBase || 'https://api.openai.com/v1').replace(/\/$/,'');
+  var model = s.embedModel || 'text-embedding-3-small';
+  try{
+    var r = await fetch(base + '/embeddings', { method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.apiKey},
+      body:JSON.stringify({ model:model, input:texts }) });
+    if(!r.ok) return null;
+    var j = await r.json();
+    if(!j.data || !j.data.length) return null;
+    return j.data.map(function(d){ return d.embedding; });
+  }catch(e){ return null; }
+}
+async function ragEnsureIndex(force){
+  var corpus = ragBuildCorpus();
+  var hash = ragCorpusHash(corpus);
+  if(!force && _ragCache && _ragCache.hash === hash) return _ragCache;
+  var stored = DB.get('ragIndex', null);
+  if(!force && stored && stored.hash === hash && stored.chunks){ _ragCache = stored; return _ragCache; }
+  var embs = await ragEmbed(corpus.map(function(c){ return c.text; }));
+  var chunks = corpus.map(function(c, idx){ return { id:c.id, text:c.text, src:c.src, emb: embs ? embs[idx] : null }; });
+  var idx = { hash:hash, model:(DB.get('settings',{}).embedModel||'text-embedding-3-small'), lexical: !embs, chunks:chunks };
+  DB.set('ragIndex', idx); _ragCache = idx; return idx;
+}
+function ragLexical(q, chunks, k){
+  var qt = ragTok(q), qf = {}; qt.forEach(function(t){ qf[t] = (qf[t]||0)+1; });
+  var df = {};
+  chunks.forEach(function(c){ var seen = {}; ragTok(c.text).forEach(function(t){ if(!seen[t]){ seen[t]=1; df[t]=(df[t]||0)+1; } }); });
+  var N = chunks.length || 1;
+  function vec(tf){ var v = {}, idf = Math.log((1+N)/(1+(df[t]||0)))+1; for(var t in tf){ v[t] = tf[t]*idf; } return v; }
+  function cos(a,b){ var s=0,na=0,nb=0; for(var t in a){ s+=a[t]*((b[t]||0)); na+=a[t]*a[t]; } for(var t in b) nb+=b[t]*b[t]; return (na&&nb)? s/(Math.sqrt(na)*Math.sqrt(nb)) : 0; }
+  var qv = vec(qf);
+  var scored = chunks.map(function(c){ var ct={}, tk=ragTok(c.text); tk.forEach(function(t){ ct[t]=(ct[t]||0)+1; }); return { c:c, score:cos(qv, vec(ct)) }; });
+  scored.sort(function(a,b){ return b.score-a.score; });
+  return scored.filter(function(x){ return x.score>0; }).slice(0,k).map(function(x){ return { text:x.c.text, src:x.c.src, score:x.score }; });
+}
+async function ragRetrieve(q, k){
+  k = k || 5; if(!q || !q.trim()) return [];
+  var idx = await ragEnsureIndex(false);
+  if(idx.lexical || !idx.chunks.some(function(c){ return c.emb; })) return ragLexical(q, idx.chunks, k);
+  var embs = await ragEmbed([q]); if(!embs) return ragLexical(q, idx.chunks, k);
+  var qv = embs[0];
+  var scored = idx.chunks.map(function(c){
+    if(!c.emb) return { c:c, score:0 };
+    var s=0, na=0, nb=0;
+    for(var i=0;i<c.emb.length;i++){ s += c.emb[i]*qv[i]; na += c.emb[i]*c.emb[i]; nb += qv[i]*qv[i]; }
+    return { c:c, score:(na&&nb)? s/(Math.sqrt(na)*Math.sqrt(nb)) : 0 };
+  });
+  scored.sort(function(a,b){ return b.score-a.score; });
+  return scored.slice(0,k).map(function(x){ return { text:x.c.text, src:x.c.src, score:x.score }; });
+}
+function ragFormat(arr){
+  if(!arr || !arr.length) return '';
+  var body = arr.map(function(x, i){ return (i+1)+'. ['+(x.src||'')+'] '+x.text; }).join('\n');
+  return '\n\n【从你的历史中检索到的相关片段（用于参考，不一定全相关）】\n'+body;
+}
+async function buildMemoryAsync(q){
+  var r = await ragRetrieve(q);
+  return buildMemory() + ragFormat(r);
+}
+function renderRagHint(n){
+  var area = document.getElementById('chatArea'); if(!area) return;
+  var div = document.createElement('div'); div.className = 'rag-hint';
+  div.textContent = '📚 已参考 '+n+' 段历史，让回复更贴近你的真实情况';
+  area.appendChild(div); area.scrollTop = area.scrollHeight;
+}
+async function ragRebuild(){
+  showTyping();
+  await ragEnsureIndex(true);
+  hideTyping();
+  showToast('检索索引已重建');
+  var el = document.getElementById('ragStatus');
+  if(el){ var ci = DB.get('ragIndex', null); el.textContent = '索引已更新（'+(ci&&ci.chunks?ci.chunks.length:0)+' 段'+(ci&&ci.lexical?' · 本地词法模式':' · 语义模式')+'）'; }
+}
+
 // Lightweight fact/mood extraction from user messages.
 function learnFromUser(msg){
   try{
