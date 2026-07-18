@@ -196,10 +196,13 @@ async function llmCall(settings, messages, tools) {
 // ---------------------------------------------------------------------------
 // ReAct 循环：反复调用 LLM，遇到 tool_calls 就在 data 快照上执行，直到模型给出最终回复
 // ---------------------------------------------------------------------------
-async function runAgent({ messages, settings, data, memory }, llm = llmCall) {
-  const sys = memory ? SYSTEM_PROMPT + '\n\n以下是关于该用户的长期记忆与实时数据，请结合它让回复更懂ta：\n' + memory : SYSTEM_PROMPT;
+async function runAgent({ messages, settings, data, memory, system, tools }, llm = llmCall) {
+  let sys = system || SYSTEM_PROMPT;
+  if (memory) sys += '\n\n以下是关于该用户的长期记忆与实时数据，请结合它让回复更懂ta：\n' + memory;
   const conv = [{ role: 'system', content: sys }, ...(messages || [])];
-  const toolsParam = TOOLS.map(t => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } }));
+  const toolSet = (tools && tools.length) ? TOOLS.filter(t => tools.includes(t.name)) : TOOLS;
+  const toolsParam = toolSet.map(t => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } }));
+  const steps = [];
 
   for (let i = 0; i < 6; i++) {
     const msg = await llm(settings, conv, toolsParam);
@@ -211,16 +214,17 @@ async function runAgent({ messages, settings, data, memory }, llm = llmCall) {
         try {
           const args = JSON.parse(tc.function.arguments || '{}');
           obs = tool ? tool.handler(args, data) : '未知工具：' + tc.function.name;
+        steps.push({ tool: tc.function.name, args: tc.function.arguments || '{}', observation: String(obs) });
         } catch (e) {
           obs = '工具参数解析错误：' + e.message;
         }
         conv.push({ role: 'tool', tool_call_id: tc.id, content: String(obs) });
       }
     } else {
-      return { messages: [{ role: 'assistant', content: msg.content || '' }], data };
+      return { messages: [{ role: 'assistant', content: msg.content || '' }], data, steps };
     }
   }
-  return { messages: [{ role: 'assistant', content: '（已达到最大推理步数，请简化你的请求或分步进行）' }], data };
+  return { messages: [{ role: 'assistant', content: '（已达到最大推理步数，请简化你的请求或分步进行）' }], data, steps };
 }
 
 // ---------------------------------------------------------------------------
@@ -236,7 +240,9 @@ fastify.post('/api/agent/chat', async (req, reply) => {
       return reply.code(400).send({ error: '请在客户端「我的 → AI 设置」中配置 API 密钥' });
     }
     const memory = body.memory || '';
-    const out = await runAgent({ messages, settings, data, memory });
+    const system = body.system || undefined;
+    const tools = Array.isArray(body.tools) ? body.tools : undefined;
+    const out = await runAgent({ messages, settings, data, memory, system, tools });
     return reply.send(out);
   } catch (e) {
     return reply.code(500).send({ error: String(e.message || e) });
