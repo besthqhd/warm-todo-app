@@ -24,6 +24,10 @@ FILES = [
     ("PRD_暖心Todo.md", "PRD_暖心Todo.md"),
     ("LICENSE", "LICENSE"),
     ("README.md", "README.md"),
+    ("AGENT_PLAN.md", "AGENT_PLAN.md"),
+    ("server/package.json", "server/package.json"),
+    ("server/index.js", "server/index.js"),
+    ("server/_test.js", "server/_test.js"),
 ]
 
 def api_get(path):

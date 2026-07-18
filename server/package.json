@@ -1,0 +1,16 @@
+{
+  "name": "warm-todo-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "暖心Todo Agent 服务端（薄代理 + ReAct/Function-Calling）",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "test": "node _test.js"
+  },
+  "dependencies": {
+    "fastify": "^4.28.1",
+    "@fastify/cors": "^9.0.1"
+  }
+}
