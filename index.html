@@ -1304,6 +1304,30 @@ function showTyping(){
 function hideTyping(){let t=document.getElementById('typing');if(t)t.remove();}
 function timeNow(){return new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}
 
+// ===== AGENT BRIDGE (Route A: thin proxy to /api/agent/chat) =====
+async function callAgent(userMsg){
+  const data={todos:DB.todos(),habits:DB.habits(),completions:DB.completions()};
+  const settings=DB.get('settings',{});
+  try{
+    const r=await fetch('/api/agent/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:[{role:'user',content:userMsg}],settings,data})
+    });
+    if(!r.ok) throw new Error('AGENT '+r.status);
+    const j=await r.json();
+    if(j.data){
+      DB.set('todos',j.data.todos||[]);
+      DB.set('habits',j.data.habits||[]);
+      DB.set('completions',j.data.completions||{todo:{},habit:{}});
+    }
+    (j.messages||[]).forEach(m=>{ if(m.content) appendChat(m.content,false); });
+    return true;
+  }catch(e){
+    return false; // unreachable/failed -> sendChat falls back to local LLM
+  }
+}
+
 // ===== MAIN CHAT SEND =====
 async function sendChat(){
   let inp=document.getElementById('aiInput'),msg=inp.value.trim();
@@ -1311,6 +1335,10 @@ async function sendChat(){
   inp.value='';
   appendChat(msg,true);
   showTyping();
+
+  // Try Agent server (ReAct + tools). Falls back to local LLM if unreachable.
+  let ok=await callAgent(msg);
+  if(ok){ hideTyping(); return; }
 
   // Detect intent: is it a todo creation request?
   let isTodoRequest=/建|添加|新建|安排|待办|任务/.test(msg);
