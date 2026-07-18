@@ -311,7 +311,7 @@ body{display:flex;align-items:center;justify-content:center}
 .ai-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5BA898,#7BC4B8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700}
 .ai-title{font-size:16px;font-weight:700;font-family:"Sarasa Gothic SC";color:var(--text-primary)}
 .ai-status-dot{width:8px;height:8px;border-radius:50%;background:#4ADE80;flex-shrink:0}
-.ai-chat-area{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.ai-chat-area{flex:1;overflow-y:auto;padding:16px var(--pad-page);display:flex;flex-direction:column;gap:14px}
 .chat-msg{max-width:85%;padding:12px 16px;border-radius:18px;font-size:14px;line-height:1.55;word-break:break-word}
 .chat-msg.user{background:var(--primary);color:#fff;align-self:flex-end;border-bottom-right-radius:5px}
 .chat-msg.bot{background:var(--bg-card);color:var(--text-primary);align-self:flex-start;border-bottom-left-radius:5px;border:1px solid #F0EBE3}
@@ -1162,7 +1162,7 @@ body{display:flex;align-items:center;justify-content:center}
 </div>
 
 <!-- ========== PAGE: ai-assistant (AI助手) ========== -->
-<div class="page" id="page-ai">
+<div class="page" id="page-ai" style="background:var(--bg)">
 <div class="ai-page">
 <div class="ai-header">
   <button class="ai-back" onclick="go('home')">&#8592;</button>
@@ -1209,12 +1209,18 @@ body{display:flex;align-items:center;justify-content:center}
     <button onclick="fillInput('我最近完成率怎么样？')">查进度</button>
     <button onclick="fillInput('鼓励一下我')">求鼓励</button>
   </div>
-</div>
-</div>
-</div>
 
+<div class="bottom-nav">
+<button class="nav-tab" onclick="go('home')"><svg viewBox="0 0 18 18" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="9" cy="9" r="3.5"/><path d="M1.5 9a7.5 7.5 0 0115 0"/></svg>今日</button>
+<button class="nav-tab" onclick="go('cal-month')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="12" height="11" rx="1"/><path d="M3 7.5h12"/><path d="M6 2.5v3M12 2.5v3"/></svg>日历</button>
+<button class="nav-tab" onclick="go('habits')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="8" r="3.5"/><circle cx="13" cy="5" r="2.5"/><path d="M8 6l4-3"/></svg>习惯</button>
+<button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
+<button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
+<button class="nav-tab" onclick="go('ai')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2a5 5 0 00-5 5c0 2.5 1.5 4.5 3.5 5.5V14h3v-1.5C12.5 11.5 14 9.5 14 7a5 5 0 00-5-5z"/><path d="M7.5 15h3"/></svg>AI</button>
+</div>
+</div>
 <!-- ========== PAGE: settings (设置/AI配置) ========== -->
-<div class="page settings-page" id="page-settings">
+<div class="page settings-page" id="page-settings" style="background:var(--bg)">
 <div class="status-bar"><span style="font-family:Inter;font-weight:600;font-size:14px">14:04</span><span class="icons" style="display:flex;gap:5px">
 <svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="5.5" width="2" height="4.5" rx="0.5" fill="#1A1A1A"/><rect x="3.5" y="3" width="2" height="7" rx="0.5" fill="#1A1A1A"/><rect x="7" y="1" width="2" height="9" rx="0.5" fill="#1A1A1A"/><rect x="10.5" y="-0.5" width="2" height="10.5" rx="0.5" fill="#1A1A1A"/></svg>
 <span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
