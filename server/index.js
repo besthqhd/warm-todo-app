@@ -196,8 +196,9 @@ async function llmCall(settings, messages, tools) {
 // ---------------------------------------------------------------------------
 // ReAct 循环：反复调用 LLM，遇到 tool_calls 就在 data 快照上执行，直到模型给出最终回复
 // ---------------------------------------------------------------------------
-async function runAgent({ messages, settings, data }, llm = llmCall) {
-  const conv = [{ role: 'system', content: SYSTEM_PROMPT }, ...(messages || [])];
+async function runAgent({ messages, settings, data, memory }, llm = llmCall) {
+  const sys = memory ? SYSTEM_PROMPT + '\n\n以下是关于该用户的长期记忆与实时数据，请结合它让回复更懂ta：\n' + memory : SYSTEM_PROMPT;
+  const conv = [{ role: 'system', content: sys }, ...(messages || [])];
   const toolsParam = TOOLS.map(t => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } }));
 
   for (let i = 0; i < 6; i++) {
@@ -234,7 +235,8 @@ fastify.post('/api/agent/chat', async (req, reply) => {
     if (!settings.apiKey) {
       return reply.code(400).send({ error: '请在客户端「我的 → AI 设置」中配置 API 密钥' });
     }
-    const out = await runAgent({ messages, settings, data });
+    const memory = body.memory || '';
+    const out = await runAgent({ messages, settings, data, memory });
     return reply.send(out);
   } catch (e) {
     return reply.code(500).send({ error: String(e.message || e) });
