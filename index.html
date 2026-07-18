@@ -385,6 +385,63 @@ body{display:flex;align-items:center;justify-content:center}
 /* ===== TODO CREATED BY AI ===== */
 .ai-created-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:8px;background:rgba(91,168,152,0.1);color:var(--primary);font-weight:500;margin-left:6px}
 
+
+/* ===== Overview hierarchical task tree (matches design) ===== */
+.ov-new-btn{margin-left:auto;width:36px;height:36px;border-radius:18px;background:var(--primary);color:#fff;border:none;font-size:22px;line-height:1;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+.ov-summary{font-size:14px;color:var(--text-tertiary);padding:10px 4px 16px}
+.ov-task{margin-bottom:12px}
+.ov-task-bar{display:flex;align-items:center;justify-content:space-between;background:var(--bg-card);border-radius:18px;padding:14px 18px;cursor:pointer;gap:10px}
+.ov-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+.ov-expand{font-size:12px;color:var(--primary);width:16px;flex:none}
+.ov-expand.ov-hide{visibility:hidden}
+.ov-name{font-size:16px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ov-right{display:flex;align-items:center;gap:6px;flex:none}
+.ov-ring{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.ov-ring-in{width:28px;height:28px;border-radius:50%;background:var(--bg-card);font-size:11px;font-weight:600;color:var(--text-primary);display:flex;align-items:center;justify-content:center}
+.um{display:grid;grid-template-columns:7px 7px;grid-template-rows:7px 7px;gap:2px}
+.um-cell{width:7px;height:7px;border-radius:2px;background:#E3DED4}
+.um-cell.on{background:var(--accent-red)}
+.ov-subs{max-height:0;overflow:hidden;transition:max-height .25s ease;padding:0 18px}
+.ov-subs.open{max-height:600px;padding:8px 18px 4px}
+.ov-sub{display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer}
+.ov-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--accent-gray);flex:none;transition:all .15s}
+.ov-dot.on{background:var(--accent-green);border-color:var(--accent-green)}
+.ov-sub-name{font-size:15px;color:var(--text-primary)}
+.ov-sub-name.done{color:var(--text-tertiary);text-decoration:line-through}
+.ov-sub-note{font-size:13px;color:var(--text-tertiary);padding:6px 0 4px}
+/* ===== Week view clickable dates ===== */
+.week-day{cursor:pointer;transition:all .15s}
+.week-day.selected{background:var(--primary);color:#fff}
+.week-day.selected .wd-label,.week-day.selected .wd-num{color:#fff}
+/* ===== Profile (matches design) ===== */
+.pf-card{background:var(--bg-card);border-radius:20px;padding:14px 18px;margin-bottom:12px}
+.pf-card.col{display:flex;flex-direction:column;padding:6px 18px}
+.pf-avatar{width:64px;height:64px;border-radius:32px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex:none}
+.pf-avatar-icon{font-size:30px}
+.pf-info{flex:1;margin-left:16px;min-width:0}
+.pf-name{font-size:18px;font-weight:700;color:var(--text-primary)}
+.pf-sign{font-size:13px;color:var(--text-tertiary);margin-top:4px}
+.pf-arrow{color:var(--accent-gray);font-size:22px;flex:none}
+.pf-group-title{font-size:13px;color:var(--primary);font-weight:600;margin:18px 4px 8px}
+.pf-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;cursor:pointer;gap:10px}
+.pf-row-left{display:flex;align-items:center;gap:10px}
+.pf-ic{font-size:18px}
+.pf-label{font-size:15px;color:var(--text-primary)}
+.pf-row-right{display:flex;align-items:center;gap:8px}
+.pf-sub{font-size:13px;color:var(--text-tertiary)}
+.pf-div{height:1px;background:var(--divider);margin:0 4px}
+.seg{display:flex;background:var(--ring-track);border-radius:16px;padding:3px}
+.seg-on{background:#fff;color:var(--primary);font-size:13px;padding:6px 12px;border-radius:12px;cursor:pointer;font-weight:600;white-space:nowrap}
+.seg-off{color:var(--text-tertiary);font-size:13px;padding:6px 12px;border-radius:12px;cursor:pointer;white-space:nowrap}
+.pf-hint{font-size:12px;color:var(--text-tertiary);padding:8px 4px 4px;line-height:1.5}
+.swatch{width:24px;height:24px;border-radius:12px;cursor:pointer;border:2px solid transparent;display:inline-block;transition:all .15s}
+.swatch.on{border-color:var(--text-primary)}
+.pf-logout{width:100%;height:48px;border-radius:16px;background:var(--bg-card);color:var(--text-tertiary);font-size:15px;margin-top:18px;cursor:pointer;border:none;font-family:inherit}
+/* ===== AI back button ===== */
+.ai-back{background:none;border:none;color:var(--text-primary);font-size:22px;cursor:pointer;margin-right:8px;font-family:inherit;flex:none}
+/* ===== new design vars ===== */
+:root{--ring-track:#ECE7DF;--divider:#EDE8E0;--accent-gray:#8A857C;--accent-green:#7BA587}
+
 </style>
 </head>
 <body>
@@ -415,11 +472,6 @@ body{display:flex;align-items:center;justify-content:center}
 <input class="auth-input" type="email" placeholder="请输入邮箱" value="xiaolin@example.com">
 <input class="auth-input" type="password" placeholder="请输入密码" value="••••••••" style="font-size:20px;letter-spacing:3px">
 <button class="auth-btn" onclick="go('home')">登 录</button>
-<div class="auth-divider">或</div>
-<button class="auth-btn-secondary" onclick="go('register')">
-<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="none" stroke="#999" stroke-width="1.5"/><text x="10" y="14" text-anchor="middle" font-size="11" font-family="sans-serif" fill="#999">G</text></svg>
-使用 Google 登录
-</button>
 </div>
 <div class="auth-bottom">还没有账号？<a onclick="go('register')">立即注册</a></div>
 <div style="padding:16px 32px;text-align:center"><a onclick="go('forgot-password')" style="color:var(--text-tertiary);text-decoration:underline;font-size:14px;cursor:pointer">忘记密码？</a></div>
@@ -792,7 +844,7 @@ body{display:flex;align-items:center;justify-content:center}
 </span></div>
 <div class="top-bar">
 <button class="back-btn" onclick="go('home')">&#8592;</button>
-<div class="page-title">2026年7月</div>
+<div class="page-title" id="weekTitle">2026年7月</div>
 <div class="calendar-nav" style="position:absolute;right:16px">
 <button class="view-toggle-btn" onclick="go('cal-month')" style="background:transparent;color:var(--text-secondary);border:none;width:49px;height:29px;border-radius:14px;font-size:13px;cursor:pointer">月</button>
 <button class="view-toggle-btn active" onclick="go('cal-week')" style="background:var(--primary);color:#fff;border:none;width:49px;height:29px;border-radius:14px;font-size:13px;cursor:pointer">周</button>
@@ -800,15 +852,15 @@ body{display:flex;align-items:center;justify-content:center}
 </div>
 <div class="content-area no-pad" style="padding-top:8px">
 <div class="week-scroll" style="margin-bottom:4px">
-<div class="week-day"><div class="wd-label">日 12</div><div class="wd-num">12</div></div>
-<div class="week-day"><div class="wd-label">一</div><div class="wd-num">13</div></div>
-<div class="week-day today"><div class="wd-label">二</div><div class="wd-num">14</div></div>
-<div class="week-day"><div class="wd-label">三</div><div class="wd-num">15</div></div>
-<div class="week-day"><div class="wd-label">四</div><div class="wd-num">16</div></div>
-<div class="week-day"><div class="wd-label">五</div><div class="wd-num">17</div></div>
-<div class="week-day"><div class="wd-label">六</div><div class="wd-num">18</div></div>
+<div class="week-day" data-m="7" data-d="12" onclick="selectWeekDay(this)"><div class="wd-label">日 12</div><div class="wd-num">12</div></div>
+<div class="week-day" data-m="7" data-d="13" onclick="selectWeekDay(this)"><div class="wd-label">一</div><div class="wd-num">13</div></div>
+<div class="week-day today selected" data-m="7" data-d="14" onclick="selectWeekDay(this)"><div class="wd-label">二</div><div class="wd-num">14</div></div>
+<div class="week-day" data-m="7" data-d="15" onclick="selectWeekDay(this)"><div class="wd-label">三</div><div class="wd-num">15</div></div>
+<div class="week-day" data-m="7" data-d="16" onclick="selectWeekDay(this)"><div class="wd-label">四</div><div class="wd-num">16</div></div>
+<div class="week-day" data-m="7" data-d="17" onclick="selectWeekDay(this)"><div class="wd-label">五</div><div class="wd-num">17</div></div>
+<div class="week-day" data-m="7" data-d="18" onclick="selectWeekDay(this)"><div class="wd-label">六</div><div class="wd-num">18</div></div>
 </div>
-<div class="week-tasks">
+<div class="week-tasks" id="weekTaskList">
 <div class="week-task-item"><span class="week-task-time">08:00</span><span class="week-task-dot todo-dot"></span><span class="week-task-name">回复客户邮件</span></div>
 <div class="week-task-item"><span class="week-task-time">10:00</span><span class="week-task-dot todo-dot"></span><span class="week-task-name">产品发布会演讲稿</span></div>
 <div class="week-task-item"><span class="week-task-time">12:00</span><span class="week-task-dot todo-dot"></span><span class="week-task-name">整理产品亮点文档</span></div>
@@ -906,29 +958,10 @@ body{display:flex;align-items:center;justify-content:center}
 <span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
 <svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
 </span></div>
+<div class="top-bar"><div class="page-title">任务总览</div><button class="ov-new-btn" onclick="go('add-todo')">+</button></div>
 <div class="content-area" style="padding-bottom:80px">
-<div class="overview-header">
-<div class="overview-avatar"><svg viewBox="0 0 20 20"><circle cx="10" cy="6" r="3.5" fill="#fff"/><path d="M3 17c0-3.9 3.1-7 7-7s7 3.1 7 7" fill="#fff"/></svg></div>
-<div class="overview-greet">你好，小林 &#128075;</div>
-</div>
-<div class="stat-grid">
-<div class="stat-card"><div class="stat-label">本月待办完成</div><div class="stat-value highlight">28</div><div class="stat-sub">完成率 72%</div></div>
-<div class="stat-card"><div class="stat-label">习惯打卡天数</div><div class="stat-value">13</div><div class="stat-sub">连续打卡 7 天</div></div>
-<div class="stat-card"><div class="stat-label">总待办事项</div><div class="stat-value">42</div><div class="stat-sub">已完成 28 · 进行中 14</div></div>
-<div class="stat-card"><div class="stat-label">总习惯</div><div class="stat-value">6</div><div class="stat-sub">坚持中 · 全部活跃</div></div>
-</div>
-<div class="weekly-chart">
-<div class="chart-title">本周完成情况</div>
-<div class="chart-bars">
-<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:65%"></div><div class="chart-bar-label">一</div></div>
-<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:80%"></div><div class="chart-bar-label">二</div></div>
-<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:45%"></div><div class="chart-bar-label">三</div></div>
-<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:90%"></div><div class="chart-bar-label">四</div></div>
-<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:55%"></div><div class="chart-bar-label">五</div></div>
-<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:30%"></div><div class="chart-bar-label">六</div></div>
-<div class="chart-bar-col"><div class="chart-bar todo-color" style="height:20%"></div><div class="chart-bar-label">日</div></div>
-</div>
-</div>
+<div class="ov-summary" id="ovSummary">—</div>
+<div id="ovTaskList"></div>
 </div>
 <div class="bottom-nav">
 <button class="nav-tab" onclick="go('home')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="3.5"/><path d="M1.5 9a7.5 7.5 0 0115 0"/></svg>今日</button>
@@ -948,21 +981,53 @@ body{display:flex;align-items:center;justify-content:center}
 <span style="font-family:Inter;font-size:11px;color:#1A1A1A">5G</span>
 <svg width="20" height="10" viewBox="0 0 22 12"><rect x="0.5" y="0.5" width="19" height="11" rx="2" fill="none" stroke="#1A1A1A"/><rect x="2" y="2" width="14" height="8" rx="1" fill="#1A1A1A"/><rect x="20" y="3" width="1.5" height="6" rx="0.75" fill="#1A1A1A"/></svg>
 </span></div>
+<div class="top-bar"><div class="page-title">我的</div></div>
 <div class="content-area" style="padding-bottom:80px">
-<div class="profile-header">
-<div class="profile-avatar-lg"><svg viewBox="0 0 36 36"><circle cx="18" cy="12" r="7" fill="#fff"/><path d="M6 30c0-6.6 5.4-12 12-12s12 5.4 12 12" fill="#fff"/></svg></div>
-<div class="profile-name">小林</div>
-<div class="profile-email">xiaolin@example.com</div>
+<div class="pf-card" onclick="go('edit-profile')">
+<div class="pf-avatar"><div class="pf-avatar-icon">&#128100;</div></div>
+<div class="pf-info">
+<div class="pf-name" id="pfName">暖心小主</div>
+<div class="pf-sign" id="pfSign">愿今天的一切都温柔以待</div>
 </div>
-<div class="menu-list" style="background:var(--bg-card);border-radius:var(--radius-card);padding:0 16px">
-<div class="menu-item" onclick="go('edit-profile')"><span class="menu-item-icon">&#9998;</span><span class="menu-item-text">编辑资料</span><span class="menu-item-arrow">&#8250;</span></div>
-<div class="menu-item"><span class="menu-item-icon">&#128276;</span><span class="menu-item-text">通知设置</span><span class="menu-item-arrow">&#8250;</span></div>
-<div class="menu-item"><span class="menu-item-icon">&#128273;</span><span class="menu-item-text">隐私与安全</span><span class="menu-item-arrow">&#8250;</span></div>
-<div class="menu-item"><span class="menu-item-icon">&#128218;</span><span class="menu-item-text">帮助与反馈</span><span class="menu-item-arrow">&#8250;</span></div>
-<div class="menu-item"><span class="menu-item-icon">&#9881;</span><span class="menu-item-text">设置</span><span class="menu-item-arrow">&#8250;</span></div>
+<div class="pf-arrow">&#8250;</div>
 </div>
-<button class="logout-btn">退出登录</button>
+<div class="pf-group-title">时间设置</div>
+<div class="pf-card col">
+<div class="pf-row">
+<div class="pf-row-left"><span class="pf-ic">&#128347;</span><span class="pf-label">时间格式</span></div>
+<div class="seg" id="segTimefmt"><div class="seg-on" onclick="segSelect('segTimefmt',this)">24小时</div><div class="seg-off" onclick="segSelect('segTimefmt',this)">12小时</div></div>
 </div>
+<div class="pf-div"></div>
+<div class="pf-row">
+<div class="pf-row-left"><span class="pf-ic">&#127774;</span><span class="pf-label">新的一天从</span></div>
+<div class="seg" id="segDayStart"><div class="seg-on" onclick="segSelect('segDayStart',this)">0:00</div><div class="seg-off" onclick="segSelect('segDayStart',this)">4:00</div></div>
+</div>
+<div class="pf-div"></div>
+<div class="pf-row">
+<div class="pf-row-left"><span class="pf-ic">&#128197;</span><span class="pf-label">一周起点</span></div>
+<div class="seg" id="segWeekStart"><div class="seg-on" onclick="segSelect('segWeekStart',this)">周一</div><div class="seg-off" onclick="segSelect('segWeekStart',this)">周日</div></div>
+</div>
+</div>
+<div class="pf-hint">切换为 12 小时制后，APP 内所有时间均显示为「上午 / 下午」</div>
+<div class="pf-group-title">个性化</div>
+<div class="pf-card col">
+<div class="pf-row" onclick="openSheet('sheet-welcome')">
+<div class="pf-row-left"><span class="pf-ic">&#128152;</span><span class="pf-label">首页欢迎语</span></div>
+<div class="pf-row-right"><span class="pf-sub" id="pfWelcome">今天也要加油呀</span><span class="pf-arrow">&#8250;</span></div>
+</div>
+<div class="pf-div"></div>
+<div class="pf-row">
+<div class="pf-row-left"><span class="pf-ic">&#128167;</span><span class="pf-label">APP背景颜色</span></div>
+<div class="pf-row-right">
+<span class="swatch" style="background:#F8F6F2" onclick="setAppBg('#F8F6F2',this)"></span>
+<span class="swatch" style="background:#6BA8A0" onclick="setAppBg('#6BA8A0',this)"></span>
+<span class="swatch" style="background:#C08A4A" onclick="setAppBg('#C08A4A',this)"></span>
+</div>
+</div>
+</div>
+<button class="pf-logout" onclick="if(confirm('确定退出登录？'))go('login')">退出登录</button>
+</div>
+
 <div class="bottom-nav">
 <button class="nav-tab" onclick="go('home')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="3.5"/><path d="M1.5 9a7.5 7.5 0 0115 0"/></svg>今日</button>
 <button class="nav-tab" onclick="go('cal-month')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="12" height="11" rx="1"/><path d="M3 7.5h12"/><path d="M6 2.5v3M12 2.5v3"/></svg>日历</button>
@@ -1003,11 +1068,11 @@ body{display:flex;align-items:center;justify-content:center}
 <div class="sheet-content">
 <div class="sheet-handle"></div>
 <div style="font-size:18px;font-weight:700;margin-bottom:16px;text-align:center">选择欢迎语</div>
-<div class="sheet-option selected"><span class="check">&#10003;</span> 今天也要加油呀</div>
-<div class="sheet-option"><span class="check">&#10003;</span> 又是元气满满的一天</div>
-<div class="sheet-option"><span class="check">&#10003;</span> 坚持就是胜利</div>
-<div class="sheet-option"><span class="check">&#10003;</span> 今天的你很棒</div>
-<div class="sheet-option"><span class="check">&#10003;</span> 慢慢来，会更快</div>
+<div class="sheet-option selected" onclick="setWelcome(this)"><span class="check">&#10003;</span> 今天也要加油呀</div>
+<div class="sheet-option" onclick="setWelcome(this)"><span class="check">&#10003;</span> 又是元气满满的一天</div>
+<div class="sheet-option" onclick="setWelcome(this)"><span class="check">&#10003;</span> 坚持就是胜利</div>
+<div class="sheet-option" onclick="setWelcome(this)"><span class="check">&#10003;</span> 今天的你很棒</div>
+<div class="sheet-option" onclick="setWelcome(this)"><span class="check">&#10003;</span> 慢慢来，会更快</div>
 <button class="sheet-cancel" onclick="closeSheet()">取消</button>
 </div>
 </div>
@@ -1071,6 +1136,7 @@ body{display:flex;align-items:center;justify-content:center}
 <div class="page" id="page-ai">
 <div class="ai-page">
 <div class="ai-header">
+  <button class="ai-back" onclick="go('home')">&#8592;</button>
   <div class="ai-avatar">暖</div>
   <div>
     <div class="ai-title">暖心 AI 助手</div>
@@ -1386,34 +1452,7 @@ function appendBotWithActions(text){
 function fillInput(t){document.getElementById('aiInput').value=t;document.getElementById('aiInput').focus()}
 
 // ===== FEATURE 1: Natural Language Todo Creation =====
-async function handleNLCreateTodo(userMsg){
-  let systemPrompt=`你是暖心Todo的待办解析引擎。将用户的自然语言转换为结构化JSON。
-必须严格返回JSON格式，不要其他文字：
-{"name":"待办名称","type":"学习|生活|健身|工作","quadrant":"重要紧急|重要不紧急|不重要紧急|不重要不紧急","subtasks":["子任务1","子任务2"],"deadline":"可选的截止日期","note":"额外说明"}
-
-规则：
-- 四象限判断逻辑：有deadline且紧迫→重要紧急；重要但可计划→重要不紧急；琐碎但急→不重要紧急；都不满足→不重要不紧急
-- 类型根据关键词判断
-- subtasks拆分合理的子步骤
-- name要简洁有力`;
-
-  let raw=await callLLM(systemPrompt,userMsg);
-  // Extract JSON from response (may be wrapped in markdown code block)
-  let jsonMatch=raw.match(/\{[\s\S]*"name"[\s\S]*\}/);
-  if(!jsonMatch) throw new Error('无法解析待办信息，请换个方式描述');
-  let todo=JSON.parse(jsonMatch[0]);
-
-  // Save to localStorage
-  let created=DB.addTodo(todo);
-  DB.recordComplete('todo',created.id); // mark as "created"
-
-  return `✅ 已为你创建待办：\n\n**${todo.name}**\n`+
-    `类型：${todo.type || '通用'} | 优先级：${todo.quadrant}\n`+
-    (todo.subtasks?.length?`子任务：${todo.subtasks.join('、')}\n`:'')+
-    (todo.deadline?`截止：${todo.deadline}\n`:'')+
-    `\n需要调整的话随时告诉我~ 🌿`;
-}
-
+// handleNLCreateTodo (multi-level decomposition) is defined with the overview helpers above.
 // ===== FEATURE 2: Smart Habit Recommendations =====
 async function recommendHabits(){
   showTyping();
@@ -1486,12 +1525,137 @@ function buildDataContext(){
 }
 
 // ===== INIT =====
+
+// ===== OVERVIEW (hierarchical task tree, matches design) =====
+function esc(s){return (s==null?s+'':s).toString().replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function urgencyMatrix(q){
+  const pos={'重要不紧急':'tl','重要紧急':'tr','不重要不紧急':'bl','不重要紧急':'br'};
+  const act=pos[q]||'tr';
+  const c=function(p){return '<span class="um-cell '+(p===act?'on':'')+'"></span>';};
+  return '<div class="um">'+c('tl')+c('tr')+c('bl')+c('br')+'</div>';
+}
+function ringHTML(pct,q){
+  const deg=pct*3.6;
+  return '<div class="ov-ring" style="background:conic-gradient(var(--primary) '+deg+'deg,#ECE7DF 0)"><div class="ov-ring-in">'+pct+'%</div></div>'+urgencyMatrix(q);
+}
+function taskCardHTML(t){
+  const kids=DB.todos().filter(function(x){return x.parent===t.id;});
+  const has=kids.length>0;
+  const done=kids.filter(function(k){return k.done;}).length;
+  const pct=has?Math.round(done/kids.length*100):(t.done?100:0);
+  let h='<div class="ov-task"><div class="ov-task-bar" onclick="toggleOvSub(\''+t.id+'\')">'
+    +'<div class="ov-left"><span class="ov-expand '+(has?'':'ov-hide')+'">'+(has?'▾':'·')+'</span><span class="ov-name">'+esc(t.name)+'</span></div>'
+    +'<div class="ov-right">'+ringHTML(pct,t.quadrant)+'</div></div>';
+  if(has){
+    h+='<div class="ov-subs" id="ovsub-'+t.id+'">'
+      +kids.map(function(k){return '<div class="ov-sub" onclick="event.stopPropagation();toggleSub(\''+k.id+'\')"><span class="ov-dot '+(k.done?'on':'')+'"></span><span class="ov-sub-name '+(k.done?'done':'')+'">'+esc(k.name)+'</span></div>';}).join('')
+      +'<div class="ov-sub-note">↳ 子任务 '+done+' / '+kids.length+' 已完成</div></div>';
+  }
+  h+='</div>';
+  return h;
+}
+function renderOverview(){
+  const tops=DB.todos().filter(function(t){return !t.parent;});
+  const box=document.getElementById('ovTaskList');
+  if(!box)return;
+  if(!tops.length){box.innerHTML='<div style="text-align:center;color:var(--text-tertiary);padding:40px 0">还没有任务，去「首页」点 + 添加吧 🌿</div>';const s=document.getElementById('ovSummary');if(s)s.textContent='0 个一级任务 · 整体进度 0%';return;}
+  let done=0,total=0;
+  tops.forEach(function(t){const ks=DB.todos().filter(function(x){return x.parent===t.id;});if(ks.length){done+=ks.filter(function(k){return k.done;}).length;total+=ks.length;}else{total++;if(t.done)done++;}});
+  const pct=total?Math.round(done/total*100):0;
+  const s=document.getElementById('ovSummary');if(s)s.textContent=tops.length+' 个一级任务 · 整体进度 '+pct+'%';
+  box.innerHTML=tops.map(taskCardHTML).join('');
+}
+function toggleOvSub(id){const e=document.getElementById('ovsub-'+id);if(e)e.classList.toggle('open');}
+function toggleSub(id){const ts=DB.todos();const t=ts.find(function(x){return x.id===id;});if(t){t.done=!t.done;DB.set('todos',ts);renderOverview();}}
+
+// ===== WEEK VIEW (clickable dates) =====
+const WEEK_TASKS={
+ '7-12':[{t:'09:00',n:'周末健身',k:'habit'},{t:'15:00',n:'家庭聚餐',k:'todo'}],
+ '7-13':[{t:'08:00',n:'晨间冥想',k:'habit'},{t:'14:00',n:'阅读30分钟',k:'habit'}],
+ '7-14':[{t:'08:00',n:'回复客户邮件',k:'todo'},{t:'10:00',n:'产品发布会演讲稿',k:'todo'},{t:'12:00',n:'整理产品亮点文档',k:'todo'},{t:'07:00',n:'晨间冥想',k:'habit'},{t:'16:30',n:'设计宣传物料',k:'todo'},{t:'20:00',n:'季度复盘报告',k:'todo'}],
+ '7-15':[{t:'09:00',n:'项目周会',k:'todo'},{t:'19:00',n:'瑜伽',k:'habit'}],
+ '7-16':[{t:'11:00',n:'客户演示',k:'todo'}],
+ '7-17':[{t:'10:00',n:'读书计划',k:'todo'},{t:'18:00',n:'运动锻炼',k:'habit'}],
+ '7-18':[{t:'14:00',n:'周末复盘',k:'todo'}]
+};
+function renderWeek(){
+  const sel=document.querySelector('.week-day.selected')||document.querySelector('.week-day');
+  if(!sel)return;
+  const key=sel.dataset.m+'-'+sel.dataset.d;
+  const list=document.getElementById('weekTaskList');
+  if(list){
+    const tasks=WEEK_TASKS[key]||[];
+    list.innerHTML=tasks.length?tasks.map(function(x){return '<div class="week-task-item"><span class="week-task-time">'+x.t+'</span><span class="week-task-dot '+(x.k==='habit'?'habit-dot':'todo-dot')+'"></span><span class="week-task-name">'+x.n+'</span></div>';}).join(''):'<div style="text-align:center;color:var(--text-tertiary);padding:30px 0">这天还没有安排 🌿</div>';
+  }
+  const wd=sel.querySelector('.wd-label')?sel.querySelector('.wd-label').textContent:'';
+  const tt=document.getElementById('weekTitle');
+  if(tt)tt.textContent='2026年7月'+sel.dataset.d+'日 '+wd;
+}
+function selectWeekDay(el){
+  document.querySelectorAll('.week-day').forEach(function(x){x.classList.remove('selected');});
+  el.classList.add('selected');
+  renderWeek();
+}
+
+// ===== PROFILE settings (matches design) =====
+function segSelect(gid,el){
+  const g=document.getElementById(gid);if(!g)return;
+  g.querySelectorAll('.seg-on,.seg-off').forEach(function(x){x.className='seg-off';});
+  el.className='seg-on';
+}
+function setAppBg(color,el){
+  document.querySelectorAll('.swatch').forEach(function(s){s.classList.remove('on');});
+  el.classList.add('on');
+  document.documentElement.style.setProperty('--bg',color);
+  DB.set('appBg',color);
+}
+function applyAppBg(){const c=DB.get('appBg',null);if(c)document.documentElement.style.setProperty('--bg',c);}
+
+// ===== FEATURE 1 (enhanced): multi-level task decomposition =====
+async function handleNLCreateTodo(userMsg){
+  let systemPrompt=`你是暖心Todo的待办拆解引擎。当用户给出一个需要【逐级拆解】的大任务时，将任务拆解为多级结构，并识别每一级任务的【名称】【类型】【重要程度】。
+必须严格返回如下JSON（不要其他文字）：
+{"tasks":[{"name":"一级任务名","type":"学习|生活|健身|工作","quadrant":"重要紧急|重要不紧急|不重要紧急|不重要不紧急","subtasks":[{"name":"二级任务名","type":"学习|生活|健身|工作","quadrant":"重要紧急|重要不紧急|不重要紧急|不重要不紧急","subtasks":[{"name":"三级任务名","type":"...","quadrant":"..."}]}]}]}
+规则：
+- 当用户明确要求"拆解/分解/逐级/一步步/安排"一个大任务时，必须递归拆解到可执行的子任务（2-4 层）
+- 每一级都要给出 name / type / quadrant
+- 类型：学习|生活|健身|工作
+- 重要程度（四象限）：有截止且紧迫→重要紧急；重要但可计划→重要不紧急；琐碎但急→不重要紧急；都不满足→不重要不紧急
+- name 简洁有力`;
+  let raw=await callLLM(systemPrompt,userMsg);
+  let m=raw.match(/\{[\s\S]*"tasks"[\s\S]*\}/);
+  if(!m) throw new Error('无法解析任务信息，请换个方式描述');
+  let data=JSON.parse(m[0]);
+  let created=[];
+  (data.tasks||[]).forEach(function(t){createTodoTree(t,null,created);});
+  let summary=created.map(function(c,i){return (i+1)+'. '+c.name+'（'+c.type+'·'+c.quadrant+'）';}).join('\n');
+  return '✅ 已为你逐级拆解并创建：\n\n'+summary+'\n\n共 '+created.length+' 个任务，已加入总览 🌿';
+}
+function createTodoTree(node,parentId,out){
+  let t={name:node.name,type:node.type||'工作',quadrant:node.quadrant||'重要不紧急',parent:parentId||null,done:false};
+  let c=DB.addTodo(t);
+  out.push(c);
+  (node.subtasks||[]).forEach(function(s){createTodoTree(s,c.id,out);});
+}
+
+
+
+function setWelcome(el){
+  document.querySelectorAll('#sheet-welcome .sheet-option').forEach(function(o){o.classList.remove('selected');});
+  el.classList.add('selected');
+  let txt=el.textContent.replace('✓','').trim();
+  let w=document.getElementById('pfWelcome'); if(w)w.textContent=txt;
+  DB.set('welcome',txt);
+  closeSheet();
+}
 (function init(){
   // Seed demo data if empty
   if(DB.todos().length===0){
-    DB.addTodo({name:'准备季度汇报',type:'学习',quadrant:'重要紧急',subtasks:['收集数据','撰写PPT','演练'],done:false});
+    let p1=DB.addTodo({name:'准备季度汇报',type:'学习',quadrant:'重要紧急',done:false});
+    ['收集数据','撰写PPT','演练'].forEach(function(s,i){DB.addTodo({name:s,type:'学习',quadrant:'重要紧急',parent:p1.id,done:i<2});});
     DB.addTodo({name:'阅读《原子习惯》第三章',type:'学习',quadrant:'重要不紧急',done:true});
-    DB.addTodo({name:'预约牙医',type:'生活',quadrant:'不重要紧急',done:false});
+    let p3=DB.addTodo({name:'预约牙医',type:'生活',quadrant:'不重要紧急',done:false});
+    ['电话预约','确认时间'].forEach(function(s){DB.addTodo({name:s,type:'生活',quadrant:'不重要紧急',parent:p3.id,done:false});});
   }
   if(DB.habits().length===0){
     DB.addHabit({name:'晨间冥想',icon:'🧘',color:'#5BA898'});
@@ -1505,6 +1669,10 @@ function buildDataContext(){
     DB.recordComplete('habit','hb'+(Date.now()%4+1),d);
     if(i<=3)DB.recordComplete('todo','td'+(Date.now()%3+1),d);
   }
+  applyAppBg();
+  let _w=DB.get('welcome',null); if(_w){let w=document.getElementById('pfWelcome'); if(w)w.textContent=_w;}
+  renderWeek();
+  renderOverview();
 })();
 
 // ===== CORE NAVIGATION (restored — was dropped during AI build) =====
@@ -1534,6 +1702,8 @@ window.go=function(pageId){
   },10);
   if(pageId==='settings')setTimeout(loadSettings,50);
   if(pageId==='ai')updateApiStatus();
+  if(pageId==='cal-week')renderWeek();
+  if(pageId==='overview')renderOverview();
 };
 </script>
 </body>
