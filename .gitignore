@@ -9,3 +9,6 @@ Thumbs.db
 
 # Empty assets folder (no exported resources yet)
 assets/
+
+# Node server deps (installed by npm / Vercel, not committed)
+server/node_modules/
