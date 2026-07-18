@@ -460,7 +460,7 @@ body{display:flex;align-items:center;justify-content:center}
 .decomp-ask{margin-top:6px;font-size:12.5px;color:#8A857C;line-height:1.5}
 .chat-chip.primary{background:#5BA898;color:#fff;border-color:#5BA898}
 .mem-fact{display:inline-block;font-size:12px;color:#5b5750;background:#F0EDE6;border-radius:12px;padding:3px 9px;margin:3px 4px 0 0;line-height:1.4}
-</style>
+\n.agent-steps{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px 40px}\n.agent-step{font-size:11px;color:var(--text-tertiary);background:#EFEBE4;border-radius:10px;padding:3px 9px}\n</style>
 </head>
 <body>
 <div class="phone-frame" id="app">
@@ -1425,28 +1425,61 @@ function hideTyping(){let t=document.getElementById('typing');if(t)t.remove();}
 function timeNow(){return new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}
 
 // ===== AGENT BRIDGE (Route A: thin proxy to /api/agent/chat) =====
-async function callAgent(userMsg){
+// opts: { system, toolNames, cleanJson, onAssistant(raw) }
+async function callAgent(userMsg, opts={}){
   const data={todos:DB.todos(),habits:DB.habits(),completions:DB.completions()};
   const settings=DB.get('settings',{});
+  const body={messages:[{role:'user',content:userMsg}],settings,data,memory:buildMemory()};
+  if(opts.system)body.system=opts.system;
+  if(opts.toolNames)body.tools=opts.toolNames;
   try{
     const r=await fetch('/api/agent/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:[{role:'user',content:userMsg}],settings,data,memory:buildMemory()})
+      body:JSON.stringify(body)
     });
     if(!r.ok) throw new Error('AGENT '+r.status);
     const j=await r.json();
+    if(j.steps&&j.steps.length)renderAgentSteps(j.steps);
     if(j.data){
       DB.set('todos',j.data.todos||[]);
       DB.set('habits',j.data.habits||[]);
       DB.set('completions',j.data.completions||{todo:{},habit:{}});
     }
-    (j.messages||[]).forEach(m=>{ if(m.content){ appendChat(m.content,false); DB.pushChat('assistant',m.content); } });
+    (j.messages||[]).forEach(m=>{
+      if(m.content){
+        const raw=m.content;
+        if(opts.onAssistant)opts.onAssistant(raw);
+        let c=raw;
+        if(opts.cleanJson)c=c.replace(/```json[\s\S]*?```/g,'').replace(/```[\s\S]*?```/g,'');
+        appendChat(c,false);
+        DB.pushChat('assistant',c);
+      }
+    });
     return true;
   }catch(e){
     return false; // unreachable/failed -> sendChat falls back to local LLM
   }
 }
+// 把 Agent 的工具调用过程可视化，让用户看到"模型先查了数据再回答"
+function renderAgentSteps(steps){
+  let area=document.getElementById('chatArea');if(!area)return;
+  let labels=steps.map(function(s){
+    if(s.tool==='list_todos')return '🔍 先看了看你已有的待办';
+    if(s.tool==='query_stats')return '📊 查了一下你的完成统计';
+    if(s.tool==='get_current_time')return '🕒 确认了当前日期';
+    if(s.tool==='create_todo')return '✏️ 创建了待办：'+(safeName(s.args));
+    if(s.tool==='complete_todo')return '✅ 标记完成';
+    if(s.tool==='create_habit')return '🌱 创建了习惯';
+    if(s.tool==='checkin_habit')return '✓ 习惯打卡';
+    if(s.tool==='recommend_today')return '💡 推荐了今日习惯';
+    return '🔧 调用了工具：'+s.tool;
+  });
+  let div=document.createElement('div');div.className='agent-steps';
+  div.innerHTML=labels.map(function(l){return '<span class="agent-step">'+l+'</span>';}).join('');
+  area.appendChild(div);area.scrollTop=area.scrollHeight;
+}
+function safeName(argsStr){try{let a=JSON.parse(argsStr||'{}');return a.name||'';}catch(e){return '';}}
 
 // ===== MAIN CHAT SEND =====
 // ===== interactive task-decomposition state =====
@@ -1455,6 +1488,33 @@ function isDecomposeIntent(msg){
   return /(拆解|拆分|分解|帮我拆|拆一下|逐级|梳理一下|理一下|从何下手|无从下手)/.test(msg)
       || /(怎么|如何|怎样)(做|完成|下手|开始|推进|安排)/.test(msg)
       || /不知道(怎么|从哪)/.test(msg);
+}
+// 拆解教练系统提示：让模型自行决定"先查数据"还是"直接拆解"
+const DECOMPOSE_AGENT_SYS='你是暖心Todo的"任务拆解教练"，风格温暖、像朋友。用户给你一个想完成的大任务，你需要帮ta拆成可执行的多级步骤，并自己决定最合理的思考顺序。\n\n你可以自行决定先做哪一步：\n- 如果先调用 list_todos / query_stats 了解一下用户已有的相关任务和完成情况，有助于拆得更贴合，就先查；\n- 如果任务很清晰、无需参考历史，也可以直接开始拆解。\n顺序由你判断，不要固定套路。\n\n重要规则：\n- 在真正把任务创建成待办之前，先给出你的拆解方案，并主动问用户一个问题（例如：这个任务大概什么时候要？有没有特别在意的部分？或询问"这样拆可以吗？你若已有自己的思路，告诉我我来帮你整理"）。\n- 不要调用 create_todo 去创建（创建交给用户确认后再做）。\n- 除文字说明外，必须在回复末尾附上一个 JSON 代码块描述任务树：\n```json\n{"reasoning":"你的拆解思路1-2句","tasks":[{"name":"大任务名","type":"学习|生活|健身|工作","quadrant":"重要紧急|重要不紧急|不重要紧急|不重要不紧急","subtasks":[{"name":"步骤","type":"...","quadrant":"...","subtasks":[{"name":"更细步骤","type":"...","quadrant":"..."}]}]}]}\n```\n- tasks 只放 1 个元素（大任务本身），其 subtasks 是拆出的步骤；每个节点都要有 name/type/quadrant；类型只能是 学习|生活|健身|工作。';
+// Agentic 拆解：走真正的 ReAct 循环，模型可先查数据再拆解（顺序由模型自定）
+async function agenticDecompose(userMsg){
+  _lastDecompTask=userMsg;
+  let rawPlan=null;
+  showTyping();
+  try{
+    const ok=await callAgent(userMsg,{
+      system:DECOMPOSE_AGENT_SYS,
+      toolNames:['list_todos','query_stats','get_current_time'],
+      cleanJson:true,
+      onAssistant:function(raw){ if(!rawPlan)rawPlan=extractPlan(raw); }
+    });
+    hideTyping();
+    if(!ok){ await proposeDecompose(userMsg); return; } // 服务端不可达 -> 本地兜底
+    if(rawPlan){ _pendingDecomp=rawPlan; renderDecompPreview(rawPlan); }
+  }catch(e){ hideTyping(); appendChat('拆解时出了点问题 😅<br>'+e.message,false); }
+}
+function extractPlan(raw){
+  if(!raw)return null;
+  let m=raw.match(/```json\s*([\s\S]*?)```/);
+  if(m){ try{ return JSON.parse(m[1]); }catch(e){} }
+  let m2=raw.match(/\{[\s\S]*"tasks"[\s\S]*\}/);
+  if(m2){ try{ return JSON.parse(m2[0]); }catch(e){} }
+  return null;
 }
 
 async function sendChat(){
@@ -1474,11 +1534,9 @@ async function sendChat(){
     return;
   }
 
-  // (B) Interactive decomposition (client-side, works even on static site).
+  // (B) Agentic decomposition: model decides whether to query first or decompose first.
   if(isDecomposeIntent(msg)){
-    showTyping();
-    try{ await proposeDecompose(msg); }
-    catch(e){ hideTyping(); appendChat('抱歉，拆解时出了点问题 😅<br>'+e.message,false); }
+    await agenticDecompose(msg);
     return;
   }
 
