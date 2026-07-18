@@ -450,6 +450,16 @@ body{display:flex;align-items:center;justify-content:center}
 /* ===== new design vars ===== */
 :root{--ring-track:#ECE7DF;--divider:#EDE8E0;--accent-gray:#8A857C;--accent-green:#7BA587}
 
+.decomp-card{margin:8px 0;padding:10px 12px;background:#F7F6F3;border:1px solid #EDE8E0;border-radius:14px}
+.dc-node{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;color:#1A1A1A}
+.dc-dot{width:6px;height:6px;border-radius:50%;background:#5BA898;flex:none}
+.dc-name{flex:1;line-height:1.35}
+.dc-lv{font-size:10px;color:#8A857C;background:#ECE7DF;border-radius:6px;padding:1px 6px;flex:none}
+.dc-lv.dc-main{color:#fff;background:#5BA898}
+.dc-tag{font-size:10px;color:#7BA587;flex:none}
+.decomp-ask{margin-top:6px;font-size:12.5px;color:#8A857C;line-height:1.5}
+.chat-chip.primary{background:#5BA898;color:#fff;border-color:#5BA898}
+.mem-fact{display:inline-block;font-size:12px;color:#5b5750;background:#F0EDE6;border-radius:12px;padding:3px 9px;margin:3px 4px 0 0;line-height:1.4}
 </style>
 </head>
 <body>
@@ -1174,6 +1184,7 @@ body{display:flex;align-items:center;justify-content:center}
     • 在你需要的时候给你鼓励 💪<br><br>
     <span class="msg-time">刚刚</span>
     <div class="chat-actions">
+      <button class="chat-chip primary" onclick="fillInput('帮我拆解：准备一场读书分享会')">🧩 拆解大任务</button>
       <button class="chat-chip" onclick="quickAction('帮我安排今天的任务')">安排今日任务</button>
       <button class="chat-chip" onclick="queryCompletion('这周我拖延了几次？')">查询完成情况</button>
       <button class="chat-chip" onclick="recommendHabits()">智能推荐习惯</button>
@@ -1265,6 +1276,20 @@ body{display:flex;align-items:center;justify-content:center}
 </div>
 
 <div class="setting-group">
+  <div class="setting-group-label">AI 长期记忆</div>
+  <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">
+    <div>
+      <div class="setting-item-label">AI 记住的关于你</div>
+      <div class="setting-item-desc">AI 会记住你的偏好、状态与聊天上下文，让回复更懂你。仅存本地浏览器。</div>
+    </div>
+    <div id="memFacts" style="min-height:20px">加载中...</div>
+    <input class="setting-input" id="memAddInput" placeholder="想让 AI 记住什么？如：我喜欢早上处理难任务">
+    <button class="setting-btn-secondary" style="width:100%;height:40px;border-radius:20px;border:1.5px solid var(--primary);background:transparent;color:var(--primary);font-size:14px;cursor:pointer;font-family:inherit" onclick="addMemoryFact()">添加到记忆</button>
+    <button class="setting-btn-secondary" style="width:100%;height:38px;border-radius:19px;border:1.5px solid var(--divider);background:transparent;color:var(--text-tertiary);font-size:13px;cursor:pointer;font-family:inherit;margin-top:2px" onclick="if(confirm('清空 AI 记忆与聊天上下文？')){DB.clearMem();DB.clearChat();loadSettings();}">清空记忆与聊天记录</button>
+  </div>
+</div>
+
+<div class="setting-group">
   <div class="setting-group-label">数据管理</div>
   <div class="setting-item" style="flex-direction:column;gap:6px">
     <div class="setting-item-label">本地存储概览</div>
@@ -1297,6 +1322,16 @@ const DB = {
   addTodo(t){let ts=this.todos();t.id='td'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);t.created=new Date().toISOString();ts.push(t);this.set('todos',ts);return t},
   addHabit(h){let hs=this.habits();h.id='hb'+Date.now();hs.push(h);this.set('habits',hs);return h},
   recordComplete(type,id,dateStr=new Date().toISOString().slice(0,10)){let c=this.completions();if(!c[type])c[type]={};c[type][dateStr]=c[type][dateStr]||[];c[type][dateStr].push({ts:new Date().toISOString(),id});this.set('completions',c)},
+  // ===== long-context memory =====
+  mem(){return this.get('mem',{facts:[],mood:'',updatedAt:''})},
+  setMem(m){m.updatedAt=new Date().toISOString();this.set('mem',m)},
+  addFact(f){if(!f)return;let m=this.mem();f=(''+f).trim();if(!f||m.facts.indexOf(f)>-1)return;m.facts.push(f);if(m.facts.length>30)m.facts=m.facts.slice(-30);this.setMem(m)},
+  setMood(x){let m=this.mem();m.mood=x;this.setMem(m)},
+  clearMem(){this.set('mem',{facts:[],mood:'',updatedAt:''})},
+  // ===== persistent chat log (conversation memory) =====
+  chatLog(){return this.get('chatlog',[])},
+  pushChat(role,content){let l=this.chatLog();l.push({role:role,content:content,ts:Date.now()});if(l.length>40)l=l.slice(-40);this.set('chatlog',l)},
+  clearChat(){this.set('chatlog',[])},
   // stats helpers
   completionRate(days=7){
     let c=this.completions(),total=0,done=0;
@@ -1322,6 +1357,7 @@ function loadSettings(){
   document.getElementById('settingModel').value=s.model||'';
   updateStorageInfo();
   updateApiStatus();
+  renderMemFacts();
 }
 function saveSettings(){
   DB.set('settings',{
@@ -1348,14 +1384,14 @@ function showToast(msg){
 }
 
 // ===== LLM CLIENT =====
-async function callLLM(systemPrompt,userMsg){
+async function callLLM(systemPrompt,userMsg,history){
   let s=DB.get('settings',{}),base=(s.apiBase||'https://api.openai.com/v1').replace(/\/$/,''),model=s.model||(base.includes('deepseek')?'deepseek-chat':'gpt-4o-mini');
   if(!s.apiKey)throw new Error('请先在「我的→AI 设置」中配置 API 密钥');
 
-  const body={model,messages:[
-    {role:'system',content:systemPrompt},
-    {role:'user',content:userMsg}
-  ],temperature:0.7,max_tokens:1024};
+  const _msgs=[{role:'system',content:systemPrompt}];
+  if(history&&history.length){history.forEach(function(h){if(h&&h.content)_msgs.push({role:h.role==='user'?'user':'assistant',content:h.content});});}
+  _msgs.push({role:'user',content:userMsg});
+  const body={model,messages:_msgs,temperature:0.7,max_tokens:1024};
 
   try{
     let r=await fetch(base+'/chat/completions',{
@@ -1396,7 +1432,7 @@ async function callAgent(userMsg){
     const r=await fetch('/api/agent/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:[{role:'user',content:userMsg}],settings,data})
+      body:JSON.stringify({messages:[{role:'user',content:userMsg}],settings,data,memory:buildMemory()})
     });
     if(!r.ok) throw new Error('AGENT '+r.status);
     const j=await r.json();
@@ -1405,7 +1441,7 @@ async function callAgent(userMsg){
       DB.set('habits',j.data.habits||[]);
       DB.set('completions',j.data.completions||{todo:{},habit:{}});
     }
-    (j.messages||[]).forEach(m=>{ if(m.content) appendChat(m.content,false); });
+    (j.messages||[]).forEach(m=>{ if(m.content){ appendChat(m.content,false); DB.pushChat('assistant',m.content); } });
     return true;
   }catch(e){
     return false; // unreachable/failed -> sendChat falls back to local LLM
@@ -1413,45 +1449,152 @@ async function callAgent(userMsg){
 }
 
 // ===== MAIN CHAT SEND =====
+// ===== interactive task-decomposition state =====
+var _pendingDecomp=null, _awaitOwnBreakdown=null, _lastDecompTask='';
+function isDecomposeIntent(msg){
+  return /(拆解|拆分|分解|帮我拆|拆一下|逐级|梳理一下|理一下|从何下手|无从下手)/.test(msg)
+      || /(怎么|如何|怎样)(做|完成|下手|开始|推进|安排)/.test(msg)
+      || /不知道(怎么|从哪)/.test(msg);
+}
+
 async function sendChat(){
   let inp=document.getElementById('aiInput'),msg=inp.value.trim();
   if(!msg)return;
   inp.value='';
   appendChat(msg,true);
-  showTyping();
+  DB.pushChat('user',msg);
+  learnFromUser(msg);
 
-  // Try Agent server (ReAct + tools). Falls back to local LLM if unreachable.
+  // (A) Waiting for the user's OWN breakdown ideas -> organize them.
+  if(_awaitOwnBreakdown){
+    let task=_awaitOwnBreakdown;_awaitOwnBreakdown=null;
+    showTyping();
+    try{ await organizeUserBreakdown(task,msg); }
+    catch(e){ hideTyping(); appendChat('抱歉，整理时出了点问题 😅<br>'+e.message,false); }
+    return;
+  }
+
+  // (B) Interactive decomposition (client-side, works even on static site).
+  if(isDecomposeIntent(msg)){
+    showTyping();
+    try{ await proposeDecompose(msg); }
+    catch(e){ hideTyping(); appendChat('抱歉，拆解时出了点问题 😅<br>'+e.message,false); }
+    return;
+  }
+
+  showTyping();
+  // (C) Try Agent server (ReAct + tools). Falls back to local LLM if unreachable.
   let ok=await callAgent(msg);
   if(ok){ hideTyping(); return; }
 
-  // Detect intent: is it a todo creation request?
   let isTodoRequest=/建|添加|新建|安排|待办|任务/.test(msg);
-
   try{
     let reply;
     if(isTodoRequest){
       reply=await handleNLCreateTodo(msg);
     }else{
-      // General chat or query
-      let context=buildDataContext();
+      // General chat with long-context memory + recent conversation history.
       reply=await callLLM(
         `你是暖心Todo应用的温暖治愈风AI助手。用简洁友好的中文回复。
-当前用户数据上下文：
-${context}
+${buildMemory()}
 规则：
 - 回复要简短、温暖、有同理心（像朋友聊天）
+- 结合上面的【长期记忆】了解用户，让回复更贴合ta的偏好与状态
 - 如果涉及待办/习惯数据，基于上面提供的真实数据回答
 - 不要编造数据，没有就说还没有记录
 - 鼓励用户保持好的习惯`,
-        msg
+        msg,
+        DB.chatLog().slice(-11,-1)
       );
     }
     hideTyping();
+    DB.pushChat('assistant',reply);
     appendBotWithActions(reply);
   }catch(e){
     hideTyping();
     appendChat('抱歉出了一点小问题 😅<br>'+e.message,false);
   }
+}
+
+// ===== FEATURE 5: interactive task decomposition =====
+async function proposeDecompose(userMsg){
+  _lastDecompTask=userMsg;
+  let sys=`你是暖心Todo的"任务拆解教练"。用户给你一个想完成的大任务，你要帮ta拆成可执行的多级步骤。
+只返回如下JSON（不要任何额外文字/解释/代码块标记）：
+{"reasoning":"你的拆解思路，1-2句，温暖鼓励的语气","tasks":[{"name":"大任务本身的简洁名称","type":"学习|生活|健身|工作","quadrant":"重要紧急|重要不紧急|不重要紧急|不重要不紧急","subtasks":[{"name":"步骤","type":"...","quadrant":"...","subtasks":[{"name":"更细步骤","type":"...","quadrant":"..."}]}]}]}
+规则：
+- tasks 数组只放 1 个元素：它就是这个大任务本身（一级任务），其 subtasks 是拆出来的步骤
+- 每个节点都要有 name / type / quadrant
+- 类型只能是：学习|生活|健身|工作
+- 四象限：有截止且紧迫→重要紧急；重要但可计划→重要不紧急；琐碎但急→不重要紧急；其余→不重要不紧急
+- 拆到"一看就知道怎么动手"的粒度，通常 2-3 层即可`;
+  let raw=await callLLM(sys,userMsg,DB.chatLog().slice(-6,-1));
+  let m=raw.match(/\{[\s\S]*"tasks"[\s\S]*\}/);
+  if(!m) throw new Error('我没太理解这个任务，能说得更具体一点吗？');
+  let data=JSON.parse(m[0]);
+  _pendingDecomp=data;
+  hideTyping();
+  renderDecompPreview(data);
+}
+async function organizeUserBreakdown(task,userText){
+  let sys=`你是暖心Todo的任务整理助手。用户想完成的大任务是：「${task}」。
+下面是用户自己的拆解思路/步骤（可能零散、口语化）。请把它整理成清晰的多级任务树，保留用户原意，必要时补充明显缺失的关键步骤。
+只返回如下JSON（不要额外文字）：
+{"reasoning":"你如何整理的，1句","tasks":[{"name":"大任务简洁名称","type":"学习|生活|健身|工作","quadrant":"重要紧急|重要不紧急|不重要紧急|不重要不紧急","subtasks":[{"name":"步骤","type":"...","quadrant":"...","subtasks":[]}]}]}
+规则：tasks 只放 1 个元素（大任务本身），其 subtasks 是用户拆出的步骤；每个节点都要有 name/type/quadrant；类型只能是 学习|生活|健身|工作。`;
+  let raw=await callLLM(sys,userText,DB.chatLog().slice(-6,-1));
+  let m=raw.match(/\{[\s\S]*"tasks"[\s\S]*\}/);
+  if(!m) throw new Error('我没太理解，可以再说一遍你的拆解步骤吗？');
+  let data=JSON.parse(m[0]);
+  data.reasoning=data.reasoning||'我按你的思路整理了一下，你看看 👇';
+  _pendingDecomp=data;
+  hideTyping();
+  renderDecompPreview(data);
+}
+function decompNodeHTML(node,depth){
+  var pad=depth*14;
+  var badge=depth===0?'<span class="dc-lv dc-main">主任务</span>':'<span class="dc-lv">L'+(depth+1)+'</span>';
+  var h='<div class="dc-node" style="padding-left:'+pad+'px"><span class="dc-dot"></span>'
+    +'<span class="dc-name">'+esc(node.name)+'</span>'+badge
+    +(node.type?'<span class="dc-tag">'+esc(node.type)+'</span>':'')+'</div>';
+  (node.subtasks||[]).forEach(function(k){h+=decompNodeHTML(k,depth+1);});
+  return h;
+}
+function renderDecompPreview(data){
+  var area=document.getElementById('chatArea');if(!area)return;
+  var reasoning=data.reasoning||'我帮你把这个大任务拆成了几步，你看看合不合适 🌿';
+  var tree=(data.tasks||[]).map(function(t){return decompNodeHTML(t,0);}).join('');
+  var div=document.createElement('div');div.className='chat-msg bot';
+  div.innerHTML='💡 '+esc(reasoning).replace(/\n/g,'<br>')
+    +'<div class="decomp-card">'+tree+'</div>'
+    +'<div class="decomp-ask">这样拆你觉得可以吗？如果你已经有自己的拆解方案，或有别的思路，直接告诉我，我来帮你整理 ✨</div>'
+    +'<span class="msg-time">'+timeNow()+'</span>'
+    +'<div class="chat-actions">'
+    +'<button class="chat-chip primary" onclick="applyDecomp()">✅ 采纳并创建</button>'
+    +'<button class="chat-chip" onclick="askOwnIdeas()">✏️ 我有自己的思路</button>'
+    +'<button class="chat-chip" onclick="regenDecomp()">🔄 换个拆法</button>'
+    +'</div>';
+  area.appendChild(div);area.scrollTop=area.scrollHeight;
+  DB.pushChat('assistant','（已给出拆解建议：'+((data.tasks&&data.tasks[0]&&data.tasks[0].name)||'')+'）');
+}
+function applyDecomp(){
+  if(!_pendingDecomp){appendChat('这个拆解方案已过期，请重新描述任务 🙏',false);return;}
+  var created=[];
+  (_pendingDecomp.tasks||[]).forEach(function(t){createTodoTree(t,null,created);});
+  _pendingDecomp=null;
+  if(typeof renderOverview==='function')renderOverview();
+  appendBotWithActions('✅ 已按这个方案创建了 '+created.length+' 个任务（含各级子任务），去「总览」页就能看到完整的任务树啦 🌿\n\n完成它们时记得回来打个卡，我为你加油 💪');
+}
+function askOwnIdeas(){
+  _awaitOwnBreakdown=_lastDecompTask||'这个任务';
+  appendChat('好呀！你打算怎么拆这个任务？把你的思路（哪怕只是几个关键步骤）发给我，我来帮你整理成清晰的多级任务 ✍️',false);
+  var el=document.getElementById('aiInput');if(el)el.focus();
+}
+async function regenDecomp(){
+  if(!_lastDecompTask){appendChat('请先描述一个想完成的任务 🙏',false);return;}
+  showTyping();
+  try{ await proposeDecompose(_lastDecompTask); }
+  catch(e){ hideTyping(); appendChat('换个拆法时出了点问题 😅<br>'+e.message,false); }
 }
 
 function appendBotWithActions(text){
@@ -1540,6 +1683,53 @@ function buildDataContext(){
     `- 近7天完成率：${DB.completionRate(7)}%\n`+
     `- 最近待办：${todos.slice(-5).map(t=>t.name).join('、')||'无'}\n`+
     `- 最近习惯：${habits.slice(-3).map(h=>h.name).join('、')||'无'}`;
+}
+
+// ===== Long-context memory: build a memory block for the LLM system prompt =====
+function buildMemory(){
+  var mem=DB.mem(),facts=(mem.facts||[]),mood=mem.mood||'';
+  var lines=[];
+  if(facts.length)lines.push('- 关于ta：'+facts.slice(-8).join('；'));
+  if(mood)lines.push('- 近期状态：'+mood);
+  var wel=DB.get('welcome','');if(wel)lines.push('- 称呼/欢迎偏好：'+wel);
+  var mtxt=lines.length?lines.join('\n'):'- （还不太了解这位用户，多聊聊就会更懂ta）';
+  return '【长期记忆】\n'+mtxt+'\n\n【实时数据】\n'+buildDataContext();
+}
+// Lightweight fact/mood extraction from user messages.
+function learnFromUser(msg){
+  try{
+    var m=msg.match(/记住[:：，, ]?(.+)/);
+    if(m&&m[1])DB.addFact(m[1].trim().slice(0,60));
+    if(/我(喜欢|爱|偏好|习惯于|通常|一般会)/.test(msg)&&msg.length<50)DB.addFact(msg.slice(0,60));
+    if(/我(不喜欢|讨厌|不爱|受不了|害怕)/.test(msg)&&msg.length<50)DB.addFact(msg.slice(0,60));
+    if(/(我是|我的工作|我在做|我正在|我平时)/.test(msg)&&msg.length<40)DB.addFact(msg.slice(0,60));
+    if(/(累|压力|焦虑|难过|烦躁|崩溃|emo|疲惫|撑不住|好难|好烦)/.test(msg))DB.setMood('最近状态偏疲惫 / 有压力');
+    else if(/(开心|顺利|搞定|太好了|真棒|高兴|轻松|完成啦|很有成就)/.test(msg))DB.setMood('最近状态不错、有成就感');
+  }catch(e){}
+}
+// Settings: render / add memory facts
+function renderMemFacts(){
+  var el=document.getElementById('memFacts');if(!el)return;
+  var mem=DB.mem(),facts=mem.facts||[],html='';
+  if(mem.mood)html+='<div class="mem-fact" style="background:#E8F0EC;color:#3f7a5f">🌱 '+esc(mem.mood)+'</div>';
+  facts.slice().reverse().forEach(function(f){html+='<div class="mem-fact">'+esc(f)+'</div>';});
+  if(!html)html='<span style="font-size:12px;color:var(--text-tertiary)">还没有记住什么，多和 AI 聊聊，或在下面手动添加～</span>';
+  el.innerHTML=html;
+}
+function addMemoryFact(){
+  var inp=document.getElementById('memAddInput');if(!inp)return;
+  var v=inp.value.trim();if(!v)return;
+  DB.addFact(v);inp.value='';renderMemFacts();
+}
+// Restore persisted conversation into the chat area (long-context memory across sessions)
+function restoreChat(){
+  var area=document.getElementById('chatArea');if(!area)return;
+  if(area.getAttribute('data-restored')==='1')return;
+  var log=DB.chatLog();
+  if(log.length){
+    log.forEach(function(m){ if(m&&m.content){ appendChat(m.content, m.role==='user'); } });
+  }
+  area.setAttribute('data-restored','1');
 }
 
 // ===== INIT =====
@@ -1838,7 +2028,7 @@ window.go=function(pageId){
     });
   },10);
   if(pageId==='settings')setTimeout(loadSettings,50);
-  if(pageId==='ai')updateApiStatus();
+  if(pageId==='ai'){updateApiStatus();restoreChat();}
   if(pageId==='cal-week')renderWeek();
   if(pageId==='overview')renderOverview();
   if(pageId==='add-todo')resetAddTodo();
