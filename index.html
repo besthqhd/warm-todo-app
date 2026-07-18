@@ -439,6 +439,14 @@ body{display:flex;align-items:center;justify-content:center}
 .pf-logout{width:100%;height:48px;border-radius:16px;background:var(--bg-card);color:var(--text-tertiary);font-size:15px;margin-top:18px;cursor:pointer;border:none;font-family:inherit}
 /* ===== AI back button ===== */
 .ai-back{background:none;border:none;color:var(--text-primary);font-size:22px;cursor:pointer;margin-right:8px;font-family:inherit;flex:none}
+/* ===== Add-todo recursive subtask nodes ===== */
+.st-node{border-left:2px solid var(--ring-track);margin:8px 0 0 2px;padding-left:10px}
+.st-body{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.st-name{flex:1 1 100%;border:1px solid var(--divider);border-radius:10px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;color:var(--text-primary)}
+.st-type,.st-quad{border:1px solid var(--divider);border-radius:10px;padding:6px 8px;font-size:12px;font-family:inherit;background:#fff;color:var(--text-primary)}
+.st-del{background:none;border:none;color:var(--accent-red);font-size:20px;line-height:1;cursor:pointer;font-family:inherit;padding:0 4px}
+.st-addchild{background:none;border:1px dashed var(--primary);color:var(--primary);border-radius:10px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;margin:6px 0 2px}
+.ov-lv{font-size:10px;color:var(--text-tertiary);background:var(--ring-track);border-radius:6px;padding:1px 5px;margin-left:6px;flex:none}
 /* ===== new design vars ===== */
 :root{--ring-track:#ECE7DF;--divider:#EDE8E0;--accent-gray:#8A857C;--accent-green:#7BA587}
 
@@ -699,7 +707,7 @@ body{display:flex;align-items:center;justify-content:center}
 <div class="top-bar">
 <button class="back-btn" onclick="go('home')">&#8592;</button>
 <div class="page-title">添加待办</div>
-<button class="top-action" onclick="go('home')">保存</button>
+<button class="top-action" onclick="saveTodo()">保存</button>
 </div>
 <div class="content-area" style="padding-bottom:80px">
 <div class="form-card">
@@ -707,27 +715,27 @@ body{display:flex;align-items:center;justify-content:center}
 <input class="form-input" placeholder="请输入待办名称，如：准备季度汇报">
 <div class="type-label" style="margin-top:16px">任务类型（可删减 / 新增）</div>
 <div class="type-chips">
-<button class="type-chip selected">学习<span class="chip-delete">×</span></button>
-<button class="type-chip">生活</button>
-<button class="type-chip">健身</button>
-<button class="type-chip type-add-chip"><span class="chip-add">+</span>添加类型</button>
+<button class="type-chip selected" onclick="selTypeChip(this)">学习</button>
+<button class="type-chip" onclick="selTypeChip(this)">生活</button>
+<button class="type-chip" onclick="selTypeChip(this)">健身</button>
+<button class="type-chip" onclick="selTypeChip(this)">工作</button>
 </div>
 <div class="divider-line"></div>
 <div class="type-label" style="margin-top:4px">重要程度（四象限单选）</div>
 <div class="quadrant-grid">
-<div class="quadrant-cell selected urgent-imp">
+<div class="quadrant-cell selected urgent-imp" onclick="selQuad(this)">
 <div class="qc-title">重要紧急</div>
 <div class="qc-desc">优先处理</div>
 </div>
-<div class="quadrant-cell imp-not-urg">
+<div class="quadrant-cell imp-not-urg" onclick="selQuad(this)">
 <div class="qc-title">重要不紧急</div>
 <div class="qc-desc">计划安排</div>
 </div>
-<div class="quadrant-cell urgent-not-imp">
+<div class="quadrant-cell urgent-not-imp" onclick="selQuad(this)">
 <div class="qc-title">不重要紧急</div>
 <div class="qc-desc">尽快委托</div>
 </div>
-<div class="quadrant-cell not-urg-not-imp">
+<div class="quadrant-cell not-urg-not-imp" onclick="selQuad(this)">
 <div class="qc-title">不重要不紧急</div>
 <div class="qc-desc">有空再做</div>
 </div>
@@ -1286,7 +1294,7 @@ const DB = {
   todos(){return this.get('todos',[])},
   habits(){return this.get('habits',[])},
   completions(){return this.get('completions',{todo:{},habit:{}})},
-  addTodo(t){let ts=this.todos();t.id='td'+Date.now();t.created=new Date().toISOString();ts.push(t);this.set('todos',ts);return t},
+  addTodo(t){let ts=this.todos();t.id='td'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);t.created=new Date().toISOString();ts.push(t);this.set('todos',ts);return t},
   addHabit(h){let hs=this.habits();h.id='hb'+Date.now();hs.push(h);this.set('habits',hs);return h},
   recordComplete(type,id,dateStr=new Date().toISOString().slice(0,10)){let c=this.completions();if(!c[type])c[type]={};c[type][dateStr]=c[type][dateStr]||[];c[type][dateStr].push({ts:new Date().toISOString(),id});this.set('completions',c)},
   // stats helpers
@@ -1548,35 +1556,56 @@ function ringHTML(pct,q){
   const deg=pct*3.6;
   return '<div class="ov-ring" style="background:conic-gradient(var(--primary) '+deg+'deg,#ECE7DF 0)"><div class="ov-ring-in">'+pct+'%</div></div>'+urgencyMatrix(q);
 }
-function taskCardHTML(t){
-  const kids=DB.todos().filter(function(x){return x.parent===t.id;});
-  const has=kids.length>0;
-  const done=kids.filter(function(k){return k.done;}).length;
-  const pct=has?Math.round(done/kids.length*100):(t.done?100:0);
-  let h='<div class="ov-task"><div class="ov-task-bar" onclick="toggleOvSub(\''+t.id+'\')">'
-    +'<div class="ov-left"><span class="ov-expand '+(has?'':'ov-hide')+'">'+(has?'▾':'·')+'</span><span class="ov-name">'+esc(t.name)+'</span></div>'
-    +'<div class="ov-right">'+ringHTML(pct,t.quadrant)+'</div></div>';
-  if(has){
-    h+='<div class="ov-subs" id="ovsub-'+t.id+'">'
-      +kids.map(function(k){return '<div class="ov-sub" onclick="event.stopPropagation();toggleSub(\''+k.id+'\')"><span class="ov-dot '+(k.done?'on':'')+'"></span><span class="ov-sub-name '+(k.done?'done':'')+'">'+esc(k.name)+'</span></div>';}).join('')
-      +'<div class="ov-sub-note">↳ 子任务 '+done+' / '+kids.length+' 已完成</div></div>';
+var _ovOpen={};
+function leafStats(t){
+  var kids=DB.todos().filter(function(x){return x.parent===t.id;});
+  if(!kids.length)return {done:t.done?1:0,total:1};
+  var d=0,tot=0;
+  kids.forEach(function(k){var s=leafStats(k);d+=s.done;tot+=s.total;});
+  return {done:d,total:tot};
+}
+function taskNodeHTML(t,depth){
+  var kids=DB.todos().filter(function(x){return x.parent===t.id;});
+  var has=kids.length>0;
+  var ind=depth>0?' style="margin-left:'+(depth*12)+'px"':'';
+  if(!has){
+    return '<div class="ov-sub"'+ind+' onclick="event.stopPropagation();toggleSub(\''+t.id+'\')">'
+      +'<span class="ov-dot '+(t.done?'on':'')+'"></span>'
+      +'<span class="ov-sub-name '+(t.done?'done':'')+'">'+esc(t.name)+'</span>'
+      +'<span class="ov-lv">L'+(depth+1)+'</span>'
+      +urgencyMatrix(t.quadrant)+'</div>';
   }
-  h+='</div>';
-  return h;
+  var st=leafStats(t);
+  var pct=st.total?Math.round(st.done/st.total*100):0;
+  var open=!!_ovOpen[t.id];
+  return '<div class="ov-task"'+ind+'><div class="ov-task-bar" onclick="toggleOvSub(\''+t.id+'\')">'
+    +'<div class="ov-left"><span class="ov-expand" id="ovarr-'+t.id+'">'+(open?'▾':'▸')+'</span><span class="ov-name">'+esc(t.name)+'</span><span class="ov-lv">L'+(depth+1)+'</span></div>'
+    +'<div class="ov-right">'+ringHTML(pct,t.quadrant)+'</div></div>'
+    +'<div class="ov-subs'+(open?' open':'')+'" id="ovsub-'+t.id+'">'
+    +kids.map(function(k){return taskNodeHTML(k,depth+1);}).join('')
+    +'<div class="ov-sub-note">↳ '+st.done+' / '+st.total+' 个末级任务已完成</div>'
+    +'</div></div>';
 }
 function renderOverview(){
-  const tops=DB.todos().filter(function(t){return !t.parent;});
-  const box=document.getElementById('ovTaskList');
+  var tops=DB.todos().filter(function(t){return !t.parent;});
+  var box=document.getElementById('ovTaskList');
   if(!box)return;
-  if(!tops.length){box.innerHTML='<div style="text-align:center;color:var(--text-tertiary);padding:40px 0">还没有任务，去「首页」点 + 添加吧 🌿</div>';const s=document.getElementById('ovSummary');if(s)s.textContent='0 个一级任务 · 整体进度 0%';return;}
-  let done=0,total=0;
-  tops.forEach(function(t){const ks=DB.todos().filter(function(x){return x.parent===t.id;});if(ks.length){done+=ks.filter(function(k){return k.done;}).length;total+=ks.length;}else{total++;if(t.done)done++;}});
-  const pct=total?Math.round(done/total*100):0;
-  const s=document.getElementById('ovSummary');if(s)s.textContent=tops.length+' 个一级任务 · 整体进度 '+pct+'%';
-  box.innerHTML=tops.map(taskCardHTML).join('');
+  var s=document.getElementById('ovSummary');
+  if(!tops.length){box.innerHTML='<div style="text-align:center;color:var(--text-tertiary);padding:40px 0">还没有任务，去「首页」点 + 添加吧 🌿</div>';if(s)s.textContent='0 个一级任务 · 整体进度 0%';return;}
+  var done=0,total=0;
+  tops.forEach(function(t){var st=leafStats(t);done+=st.done;total+=st.total;});
+  var pct=total?Math.round(done/total*100):0;
+  if(s)s.textContent=tops.length+' 个一级任务 · '+total+' 个末级任务 · 整体进度 '+pct+'%';
+  box.innerHTML=tops.map(function(t){return taskNodeHTML(t,0);}).join('');
 }
-function toggleOvSub(id){const e=document.getElementById('ovsub-'+id);if(e)e.classList.toggle('open');}
-function toggleSub(id){const ts=DB.todos();const t=ts.find(function(x){return x.id===id;});if(t){t.done=!t.done;DB.set('todos',ts);renderOverview();}}
+function toggleOvSub(id){
+  var e=document.getElementById('ovsub-'+id);if(!e)return;
+  var open=!e.classList.contains('open');
+  e.classList.toggle('open',open);
+  _ovOpen[id]=open;
+  var ar=document.getElementById('ovarr-'+id);if(ar)ar.textContent=open?'▾':'▸';
+}
+function toggleSub(id){var ts=DB.todos();var t=ts.find(function(x){return x.id===id;});if(t){t.done=!t.done;DB.set('todos',ts);renderOverview();}}
 
 // ===== WEEK VIEW (clickable dates) =====
 const WEEK_TASKS={
@@ -1621,33 +1650,87 @@ function setAppBg(color,el){
 }
 function applyAppBg(){const c=DB.get('appBg',null);if(c)document.documentElement.style.setProperty('--bg',c);}
 
-// ===== ADD-TODO: dynamic subtask rows =====
-let _subIdx=0;
+// ===== ADD-TODO: recursive multi-level subtask nodes (name+type+quadrant, unlimited depth) =====
+var TYPE_OPTS='<option>学习</option><option>生活</option><option>健身</option><option>工作</option>';
+var QUAD_OPTS='<option>重要紧急</option><option>重要不紧急</option><option>不重要紧急</option><option>不重要不紧急</option>';
+function makeStNode(){
+  var node=document.createElement('div');
+  node.className='st-node';
+  node.innerHTML='<div class="st-body">'
+    +'<input class="st-name" placeholder="子任务名称...">'
+    +'<select class="st-type">'+TYPE_OPTS+'</select>'
+    +'<select class="st-quad">'+QUAD_OPTS+'</select>'
+    +'<button class="st-del" title="删除" onclick="this.closest(\'.st-node\').remove()">&times;</button>'
+    +'</div>'
+    +'<button class="st-addchild" onclick="addChildTo(this)">+ 添加下一级子任务</button>'
+    +'<div class="st-children"></div>';
+  return node;
+}
 function addSubtaskRow(){
-  const area=document.getElementById('subtaskArea');
-  if(!area)return;
-  _subIdx++;
-  const row=document.createElement('div');
-  row.className='subtask-row';
-  row.id='strow-'+_subIdx;
-  row.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
-    +'<span class="ov-dot" style="flex:none"></span>'
-    +'<input class="auth-input" style="flex:1;font-size:14px" placeholder="子任务名称..." id="stinput-'+_subIdx+'">'
-    +'<button onclick="removeSubtaskRow('+_subIdx+')" style="background:none;border:none;color:var(--accent-red);font-size:18px;cursor:pointer;font-family:inherit">&times;</button>'
-    +'</div>';
-  area.appendChild(row);
-  document.getElementById('stinput-'+_subIdx).focus();
+  var a=document.getElementById('subtaskArea');
+  if(a){var n=makeStNode();a.appendChild(n);n.querySelector('.st-name').focus();}
 }
-function removeSubtaskRow(idx){
-  const el=document.getElementById('strow-'+idx); if(el)el.remove();
+function addChildTo(btn){
+  var node=btn.closest('.st-node');
+  var box=node.querySelector(':scope > .st-children');
+  var n=makeStNode();box.appendChild(n);n.querySelector('.st-name').focus();
 }
-function collectSubtasks(){
-  const area=document.getElementById('subtaskArea'); if(!area)return [];
-  const inputs=area.querySelectorAll('input[id^=stinput]');
-  let names=[];
-  for(let i=0;i<inputs.length;i++){let v=inputs[i].value.trim(); if(v)names.push(v);}
-  return names;
+function collectNodes(container){
+  var out=[];
+  var kids=container.querySelectorAll(':scope > .st-node');
+  kids.forEach(function(n){
+    var nameEl=n.querySelector(':scope > .st-body > .st-name');
+    var name=nameEl?nameEl.value.trim():'';
+    if(!name)return;
+    var type=n.querySelector(':scope > .st-body > .st-type').value;
+    var quad=n.querySelector(':scope > .st-body > .st-quad').value;
+    var box=n.querySelector(':scope > .st-children');
+    out.push({name:name,type:type,quadrant:quad,subtasks:collectNodes(box)});
+  });
+  return out;
 }
+// write a subtask tree under a given parent id (unlimited depth)
+function addTreeUnder(parentId,node){
+  var t=DB.addTodo({name:node.name,type:node.type||'工作',quadrant:node.quadrant||'重要不紧急',parent:parentId||null,done:node.done||false});
+  (node.subtasks||[]).forEach(function(s){addTreeUnder(t.id,s);});
+  return t;
+}
+// top-level type / quadrant selection on add-todo page
+function selTypeChip(el){
+  el.parentNode.querySelectorAll('.type-chip').forEach(function(c){if(!c.classList.contains('type-add-chip'))c.classList.remove('selected');});
+  el.classList.add('selected');
+}
+function selQuad(el){
+  el.parentNode.querySelectorAll('.quadrant-cell').forEach(function(c){c.classList.remove('selected');});
+  el.classList.add('selected');
+}
+function resetAddTodo(){
+  var nameEl=document.querySelector('#page-add-todo .form-input'); if(nameEl)nameEl.value='';
+  var area=document.getElementById('subtaskArea'); if(area)area.innerHTML='';
+  var chips=document.querySelectorAll('#page-add-todo .type-chip');
+  chips.forEach(function(c){c.classList.remove('selected');});
+  if(chips[0])chips[0].classList.add('selected');
+  var cells=document.querySelectorAll('#page-add-todo .quadrant-cell');
+  cells.forEach(function(c){c.classList.remove('selected');});
+  if(cells[0])cells[0].classList.add('selected');
+}
+function saveTodo(){
+  var nameEl=document.querySelector('#page-add-todo .form-input');
+  var name=nameEl?nameEl.value.trim():'';
+  if(!name){alert('请输入待办名称');return;}
+  var typeEl=document.querySelector('#page-add-todo .type-chip.selected');
+  var type=typeEl?typeEl.textContent.replace('×','').trim():'学习';
+  var quadEl=document.querySelector('#page-add-todo .quadrant-cell.selected .qc-title');
+  var quad=quadEl?quadEl.textContent.trim():'重要紧急';
+  var p=DB.addTodo({name:name,type:type,quadrant:quad,done:false});
+  var subs=collectNodes(document.getElementById('subtaskArea'));
+  subs.forEach(function(s){addTreeUnder(p.id,s);});
+  renderOverview();
+  resetAddTodo();
+  if(typeof showToast==='function')showToast('已保存，共 '+(1+countNodes(subs))+' 个任务');
+  go('overview');
+}
+function countNodes(arr){var n=0;(arr||[]).forEach(function(s){n+=1+countNodes(s.subtasks);});return n;}
 
 // ===== FEATURE 1 (enhanced): multi-level task decomposition =====
 async function handleNLCreateTodo(userMsg){
@@ -1687,13 +1770,29 @@ function setWelcome(el){
   closeSheet();
 }
 (function init(){
-  // Seed demo data if empty
-  if(DB.todos().length===0){
-    let p1=DB.addTodo({name:'准备季度汇报',type:'学习',quadrant:'重要紧急',done:false});
-    ['收集数据','撰写PPT','演练'].forEach(function(s,i){DB.addTodo({name:s,type:'学习',quadrant:'重要紧急',parent:p1.id,done:i<2});});
-    DB.addTodo({name:'阅读《原子习惯》第三章',type:'学习',quadrant:'重要不紧急',done:true});
-    let p3=DB.addTodo({name:'预约牙医',type:'生活',quadrant:'不重要紧急',done:false});
-    ['电话预约','确认时间'].forEach(function(s){DB.addTodo({name:s,type:'生活',quadrant:'不重要紧急',parent:p3.id,done:false});});
+  // Seed / upgrade demo data (v3 = multi-level tree). Rebuilds demo todos so the
+  // overview shows a 3-level example; runs once per version bump.
+  if(DB.get('seedVer')!=='v3'){
+    var demo=[
+      {name:'准备季度汇报',type:'学习',quadrant:'重要紧急',subtasks:[
+        {name:'收集数据',type:'学习',quadrant:'重要紧急',subtasks:[
+          {name:'整理销售数据',type:'工作',quadrant:'重要紧急',done:true},
+          {name:'收集用户反馈',type:'工作',quadrant:'重要不紧急'}
+        ]},
+        {name:'撰写报告',type:'学习',quadrant:'重要不紧急',subtasks:[
+          {name:'制作PPT',type:'工作',quadrant:'重要紧急'},
+          {name:'撰写文字稿',type:'学习',quadrant:'重要不紧急',done:true}
+        ]}
+      ]},
+      {name:'阅读《原子习惯》第三章',type:'学习',quadrant:'重要不紧急',done:true},
+      {name:'预约牙医',type:'生活',quadrant:'不重要紧急',subtasks:[
+        {name:'电话预约',type:'生活',quadrant:'不重要紧急'},
+        {name:'确认时间',type:'生活',quadrant:'不重要紧急'}
+      ]}
+    ];
+    DB.set('todos',[]);
+    demo.forEach(function(n){addTreeUnder(null,n);});
+    DB.set('seedVer','v3');
   }
   if(DB.habits().length===0){
     DB.addHabit({name:'晨间冥想',icon:'🧘',color:'#5BA898'});
@@ -1742,6 +1841,7 @@ window.go=function(pageId){
   if(pageId==='ai')updateApiStatus();
   if(pageId==='cal-week')renderWeek();
   if(pageId==='overview')renderOverview();
+  if(pageId==='add-todo')resetAddTodo();
 };
 </script>
 </body>
