@@ -1544,10 +1544,15 @@ async function agenticDecompose(userMsg){
 }
 function extractPlan(raw){
   if(!raw)return null;
+  // 1) 标准 ```json 代码块
   let m=raw.match(/```json\s*([\s\S]*?)```/);
-  if(m){ try{ return JSON.parse(m[1]); }catch(e){} }
+  if(m){ try{ let o=JSON.parse(m[1]); if(!Array.isArray(o))return o; }catch(e){} }
+  // 2) 代码块未闭合（缺结尾 ```）：从 ```json 截到文末再解析
+  let m0=raw.match(/```json\s*([\s\S]*)$/);
+  if(m0){ try{ let o=JSON.parse(m0[1]); if(!Array.isArray(o))return o; }catch(e){} }
+  // 3) 散落文本中的 {..."tasks"...}
   let m2=raw.match(/\{[\s\S]*"tasks"[\s\S]*\}/);
-  if(m2){ try{ return JSON.parse(m2[0]); }catch(e){} }
+  if(m2){ try{ let o=JSON.parse(m2[0]); if(!Array.isArray(o))return o; }catch(e){} }
   return null;
 }
 
