@@ -1347,7 +1347,7 @@ const DB = {
   habits(){return this.get('habits',[])},
   completions(){return this.get('completions',{todo:{},habit:{}})},
   addTodo(t){let ts=this.todos();t.id='td'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);t.created=new Date().toISOString();ts.push(t);this.set('todos',ts);return t},
-  addHabit(h){let hs=this.habits();h.id='hb'+Date.now();hs.push(h);this.set('habits',hs);return h},
+  addHabit(h){let hs=this.habits();h.id='hb'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);hs.push(h);this.set('habits',hs);return h},
   recordComplete(type,id,dateStr=new Date().toISOString().slice(0,10)){let c=this.completions();if(!c[type])c[type]={};c[type][dateStr]=c[type][dateStr]||[];c[type][dateStr].push({ts:new Date().toISOString(),id});this.set('completions',c)},
   // ===== long-context memory =====
   mem(){return this.get('mem',{facts:[],mood:'',updatedAt:''})},
