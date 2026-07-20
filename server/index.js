@@ -45,7 +45,7 @@ const TOOLS = [
       required: ['name'],
     },
     handler(a, d) {
-      const id = 'td' + Date.now();
+      const id = 'td' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
       d.todos.push({
         id, name: a.name, type: a.type || '通用',
         quadrant: a.quadrant || '不重要不紧急',
@@ -88,7 +88,7 @@ const TOOLS = [
       properties: { name: { type: 'string' }, freq: { type: 'string', enum: ['每日', '每周', '工作日'] } },
     },
     handler(a, d) {
-      const id = 'hb' + Date.now();
+      const id = 'hb' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
       d.habits.push({ id, name: a.name, freq: a.freq || '每日' });
       return `已创建习惯「${a.name}」(id=${id})`;
     },

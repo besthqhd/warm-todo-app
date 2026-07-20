@@ -1159,7 +1159,6 @@ body{display:flex;align-items:center;justify-content:center}
 </div>
 </div>
 
-</div>
 
 <!-- ========== PAGE: ai-assistant (AI助手) ========== -->
 <div class="page" id="page-ai" style="background:var(--bg)">
@@ -1217,6 +1216,8 @@ body{display:flex;align-items:center;justify-content:center}
 <button class="nav-tab" onclick="go('overview')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="12" height="9" rx="1"/></svg>总览</button>
 <button class="nav-tab" onclick="go('profile')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="5" r="3"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>我的</button>
 <button class="nav-tab" onclick="go('ai')"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2a5 5 0 00-5 5c0 2.5 1.5 4.5 3.5 5.5V14h3v-1.5C12.5 11.5 14 9.5 14 7a5 5 0 00-5-5z"/><path d="M7.5 15h3"/></svg>AI</button>
+</div>
+</div>
 </div>
 </div>
 <!-- ========== PAGE: settings (设置/AI配置) ========== -->
@@ -1347,7 +1348,7 @@ const DB = {
   habits(){return this.get('habits',[])},
   completions(){return this.get('completions',{todo:{},habit:{}})},
   addTodo(t){let ts=this.todos();t.id='td'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);t.created=new Date().toISOString();ts.push(t);this.set('todos',ts);return t},
-  addHabit(h){let hs=this.habits();h.id='hb'+Date.now();hs.push(h);this.set('habits',hs);return h},
+  addHabit(h){let hs=this.habits();h.id='hb'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);hs.push(h);this.set('habits',hs);return h},
   recordComplete(type,id,dateStr=new Date().toISOString().slice(0,10)){let c=this.completions();if(!c[type])c[type]={};c[type][dateStr]=c[type][dateStr]||[];c[type][dateStr].push({ts:new Date().toISOString(),id});this.set('completions',c)},
   // ===== long-context memory =====
   mem(){return this.get('mem',{facts:[],mood:'',updatedAt:''})},
@@ -1544,10 +1545,15 @@ async function agenticDecompose(userMsg){
 }
 function extractPlan(raw){
   if(!raw)return null;
+  // 1) 标准 ```json 代码块
   let m=raw.match(/```json\s*([\s\S]*?)```/);
-  if(m){ try{ return JSON.parse(m[1]); }catch(e){} }
+  if(m){ try{ let o=JSON.parse(m[1]); if(!Array.isArray(o))return o; }catch(e){} }
+  // 2) 代码块未闭合（缺结尾 ```）：从 ```json 截到文末再解析
+  let m0=raw.match(/```json\s*([\s\S]*)$/);
+  if(m0){ try{ let o=JSON.parse(m0[1]); if(!Array.isArray(o))return o; }catch(e){} }
+  // 3) 散落文本中的 {..."tasks"...}
   let m2=raw.match(/\{[\s\S]*"tasks"[\s\S]*\}/);
-  if(m2){ try{ return JSON.parse(m2[0]); }catch(e){} }
+  if(m2){ try{ let o=JSON.parse(m2[0]); if(!Array.isArray(o))return o; }catch(e){} }
   return null;
 }
 
@@ -2240,5 +2246,6 @@ window.go=function(pageId){
   if(pageId==='add-todo')resetAddTodo();
 };
 </script>
+</div>
 </body>
 </html>

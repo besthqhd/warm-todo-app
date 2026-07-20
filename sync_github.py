@@ -28,6 +28,9 @@ FILES = [
     ("server/package.json", "server/package.json"),
     ("server/index.js", "server/index.js"),
     ("server/_test.js", "server/_test.js"),
+    ("tests/assertions.js", "tests/assertions.js"),
+    ("tests/eval_json_parse.js", "tests/eval_json_parse.js"),
+    ("tests/eval_6dim.js", "tests/eval_6dim.js"),
 ]
 
 def api_get(path):
