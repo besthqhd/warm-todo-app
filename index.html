@@ -1597,7 +1597,7 @@ function safeName(argsStr){try{let a=JSON.parse(argsStr||'{}');return a.name||''
 
 // ===== MAIN CHAT SEND =====
 // ===== interactive task-decomposition state =====
-var _pendingDecomp=null, _awaitOwnBreakdown=null, _pendingDetailGoal=null, _lastDecompTask='';
+var _pendingDecomp=null, _awaitOwnBreakdown=null, _pendingDetailGoal=null, _pendingDetailPhase='initial', _lastDecompTask='';
 function isDecomposeIntent(msg){
   return /(拆解|拆分|分解|帮我拆|拆一下|逐级|梳理一下|理一下|从何下手|无从下手)/.test(msg)
       || /(怎么|如何|怎样)(做|完成|下手|开始|推进|安排)/.test(msg)
@@ -1626,17 +1626,18 @@ async function agenticDecompose(userMsg,thinkingLabel='正在根据你的目标�
     else DB.track('ai_decomposition_returned',{parsed:false,route:'agent'});
   }catch(e){ hideTyping(); appendChat('拆解时出了点问题 😅<br>'+e.message,false); }
 }
-function extractPlan(raw){
+function extractPlan(raw){return parsePlanFromText(raw);}
+function parsePlanFromText(raw){
   if(!raw)return null;
-  // 1) 标准 ```json 代码块
-  let m=raw.match(/```json\s*([\s\S]*?)```/);
-  if(m){ try{ let o=JSON.parse(m[1]); if(!Array.isArray(o))return o; }catch(e){} }
-  // 2) 代码块未闭合（缺结尾 ```）：从 ```json 截到文末再解析
-  let m0=raw.match(/```json\s*([\s\S]*)$/);
-  if(m0){ try{ let o=JSON.parse(m0[1]); if(!Array.isArray(o))return o; }catch(e){} }
-  // 3) 散落文本中的 {..."tasks"...}
-  let m2=raw.match(/\{[\s\S]*"tasks"[\s\S]*\}/);
-  if(m2){ try{ let o=JSON.parse(m2[0]); if(!Array.isArray(o))return o; }catch(e){} }
+  var start=raw.search(/\{\s*"(?:reasoning|tasks)"/);if(start<0)return null;
+  var depth=0,inString=false,escaped=false;
+  for(var i=start;i<raw.length;i++){
+    var ch=raw[i];
+    if(inString){if(escaped)escaped=false;else if(ch==='\\')escaped=true;else if(ch==='"')inString=false;continue;}
+    if(ch==='"')inString=true;
+    else if(ch==='{')depth++;
+    else if(ch==='}'&&--depth===0){try{var obj=JSON.parse(raw.slice(start,i+1));return Array.isArray(obj)?null:obj;}catch(e){return null;}}
+  }
   return null;
 }
 
@@ -1705,13 +1706,14 @@ function shouldAskDetailQuestions(goal){
   let hasTime=/(\d+\s*(分钟|小时|天|周)|每天|每周|早上|晚上)/.test(goal);
   return goal.length<90&&!(hasDeadline&&hasTime);
 }
-function renderDetailQuestions(goal){
+function renderDetailQuestions(goal,phase='initial'){
   _pendingDetailGoal=goal;
+  _pendingDetailPhase=phase;
   DB.track('ai_detail_questions_shown',{goalLength:goal.length});
-  let kind=detailQuestionKind(goal),questions=detailQuestionsFor(kind);
+  let kind=detailQuestionKind(goal),questions=detailQuestionsFor(kind,phase);
   let area=document.getElementById('chatArea');if(!area)return;
   let div=document.createElement('div');div.className='chat-msg bot';
-  div.innerHTML='为了把「'+esc(goal)+'」细化成能直接写入待办的步骤，我想再了解几件和这件事最相关的信息（都可简短填写或跳过）：'
+  div.innerHTML=(phase==='refine'?'为了把现有框架进一步落到执行细节，我再确认 3 个关键约束（都可简短填写或跳过）：':'为了把「'+esc(goal)+'」细化成能直接写入待办的步骤，我想再了解几件和这件事最相关的信息（都可简短填写或跳过）：')
     +'<div class="decomp-card" style="margin-top:10px">'
     +'<label class="first-step-label">1. '+esc(questions[0].label)+'</label><input class="first-step-input detail-outcome" maxlength="120" placeholder="'+esc(questions[0].placeholder)+'">'
     +'<label class="first-step-label" style="margin-top:10px">2. '+esc(questions[1].label)+'</label><input class="first-step-input detail-starting-point" maxlength="120" placeholder="'+esc(questions[1].placeholder)+'">'
@@ -1726,14 +1728,22 @@ function detailQuestionKind(goal){
   if(/健身|运动|跑步|减脂|增肌|训练|瑜伽|力量|体重|体脂/.test(goal))return 'fitness';
   return 'life';
 }
-function detailQuestionsFor(kind){
+function detailQuestionsFor(kind,phase='initial'){
   var bank={
     career:[{label:'目标岗位或最晚投递时间是什么？',placeholder:'例如：产品经理实习，下周一前投递'},{label:'你已有的材料或进度是什么？',placeholder:'例如：已有旧简历和 2 个岗位 JD'},{label:'今天或每天可投入多久？',placeholder:'例如：今晚 40 分钟，每天 1 小时'}],
     study:[{label:'学习目标或考试/交付日期是什么？',placeholder:'例如：两周后完成期末复习'},{label:'目前学到哪里、已有何种材料？',placeholder:'例如：已学完第 3 章，有课程讲义'},{label:'可安排的学习时段是？',placeholder:'例如：工作日晚上各 1 小时'}],
     work:[{label:'这件事的交付物和截止时间是什么？',placeholder:'例如：周五前交一版汇报 PPT'},{label:'已有资料、协作人或依赖项是什么？',placeholder:'例如：已有数据，等待运营确认口径'},{label:'你这次能投入的时间是？',placeholder:'例如：今天下午 2 小时'}],
     fitness:[{label:'你的目标是什么，想在什么时候看到变化？',placeholder:'例如：3 个月减脂 5 公斤，体能更好'},{label:'目前的运动基础、身体限制或可用条件是什么？',placeholder:'例如：刚开始，只有瑜伽垫，膝盖不适'},{label:'每周能安排几次、每次多长时间？',placeholder:'例如：每周 3 次，每次 40 分钟'}],
     life:[{label:'你想达成什么结果，或最晚何时完成？',placeholder:'例如：周末前完成搬家收纳'},{label:'目前已有的物品、预算或准备是什么？',placeholder:'例如：已买收纳箱，预算 300 元'},{label:'你能投入多久或在哪个时段做？',placeholder:'例如：今晚 30 分钟，周六半天'}]
-  };return bank[kind];
+  };
+  var refinement={
+    career:[{label:'你最想优先投递的方向或岗位要求是什么？',placeholder:'例如：优先投产品经理实习，需突出数据分析'},{label:'你目前最担心的短板或卡点是什么？',placeholder:'例如：项目经历描述不够有说服力'},{label:'下一步你愿意先完成哪一个小动作？',placeholder:'例如：今晚先选 2 个 JD 对照修改简历'}],
+    study:[{label:'哪些科目/章节最薄弱或最优先？',placeholder:'例如：数学二高数积分和英语阅读'},{label:'你准备用什么资料或学习方法？',placeholder:'例如：真题、网课和错题本'},{label:'本周最容易被打断的因素是什么？',placeholder:'例如：白天实习，只有晚上能复习'}],
+    work:[{label:'最关键的验收标准或决策人是谁？',placeholder:'例如：老板确认数据口径后才能发出'},{label:'目前最大的依赖或风险是什么？',placeholder:'例如：客户素材还没提供'},{label:'你愿意今天先推进哪一步？',placeholder:'例如：先发消息确认素材交付时间'}],
+    fitness:[{label:'你更看重体重、围度、力量还是体能？',placeholder:'例如：优先改善体能和体脂'},{label:'有哪些动作偏好或需要避免的限制？',placeholder:'例如：不跑步，膝盖偶尔不适'},{label:'第一周最容易坚持的安排是什么？',placeholder:'例如：周二四六晚饭后在家练 30 分钟'}],
+    life:[{label:'其中最容易拖延或最麻烦的一步是什么？',placeholder:'例如：不知道先处理哪些物品'},{label:'有没有预算、他人协作或地点限制？',placeholder:'例如：需要和室友一起确认时间'},{label:'你愿意今天先完成哪个最小动作？',placeholder:'例如：列出要收纳的三个区域'}]
+  };
+  return (phase==='refine'?refinement:bank)[kind];
 }
 async function submitDetailQuestions(button){
   if(!_pendingDetailGoal)return;
@@ -1743,7 +1753,7 @@ async function submitDetailQuestions(button){
   let availability=(card&&card.querySelector('.detail-availability')||{}).value||'';
   let details=[outcome,start,availability].map(function(value,index){return {value:value,labelIndex:index};}).filter(function(x){return x.value.trim();});
   if(!details.length){appendChat('至少补充一项就能让我拆得更贴合；如果暂时没有，也可以点「先给我一个框架」。',false);return;}
-  let goal=_pendingDetailGoal,labels=detailQuestionsFor(detailQuestionKind(goal));_pendingDetailGoal=null;
+  let goal=_pendingDetailGoal,labels=detailQuestionsFor(detailQuestionKind(goal),_pendingDetailPhase);_pendingDetailGoal=null;
   let enriched=goal+'\n\n【用于细化计划的补充信息】\n'+details.map(function(x){return '- '+(labels[x.labelIndex]&&labels[x.labelIndex].label||'补充信息')+'：'+x.value.trim();}).join('\n');
   DB.track('ai_detail_questions_submitted',{fieldCount:details.length});
   appendChat('收到。正在根据你补充的信息，把框架细化为可直接写入待办的步骤…',false);
@@ -1754,8 +1764,9 @@ async function skipDetailQuestions(){
   if(!_pendingDetailGoal)return;
   let goal=_pendingDetailGoal;_pendingDetailGoal=null;
   DB.track('ai_detail_questions_skipped',{});
-  appendChat('好的，我先给你一个可调整的框架。',false);
-  await agenticDecompose(goal);
+  appendChat('好的。正在根据你给出的目标生成一个可调整的框架…',false);
+  await new Promise(function(resolve){requestAnimationFrame(resolve);});
+  await agenticDecompose(goal,'正在生成可调整的任务框架…');
 }
 
 // ===== FEATURE 5: interactive task decomposition =====
@@ -1769,12 +1780,11 @@ async function proposeDecompose(userMsg,opts={}){
 - tasks 数组只放 1 个元素：它就是这个大任务本身（一级任务），其 subtasks 是拆出来的步骤
 - 每个节点都要有 name / type / quadrant
 - 类型只能是：学习|生活|健身|工作
-- 四象限：有截止且紧迫→重要紧急；重要但可计划→重要不紧急；琐碎但急→不重要紧急；其余→不重要不紧急
+  - 四象限：有截止且紧迫→重要紧急；重要但可计划→重要不紧急；琐碎但急→不重要紧急；其余→不重要不紧急
 - 拆到"一看就知道怎么动手"的粒度，通常 2-3 层即可`;
   let raw=await callLLM(sys,userMsg,DB.chatLog().slice(-6,-1));
-  let m=raw.match(/\{[\s\S]*"tasks"[\s\S]*\}/);
-  if(!m) throw new Error('我没太理解这个任务，能说得更具体一点吗？');
-  let data=JSON.parse(m[0]);
+  let data=parsePlanFromText(raw);
+  if(!data||!Array.isArray(data.tasks)) throw new Error('我没太理解这个任务，能说得更具体一点吗？');
   _pendingDecomp=data;
   DB.track('ai_decomposition_returned',{parsed:true,route:'fallback'});
   hideTyping();
@@ -1787,9 +1797,8 @@ async function organizeUserBreakdown(task,userText){
 {"reasoning":"你如何整理的，1句","tasks":[{"name":"大任务简洁名称","type":"学习|生活|健身|工作","quadrant":"重要紧急|重要不紧急|不重要紧急|不重要不紧急","subtasks":[{"name":"步骤","type":"...","quadrant":"...","subtasks":[]}]}]}
 规则：tasks 只放 1 个元素（大任务本身），其 subtasks 是用户拆出的步骤；每个节点都要有 name/type/quadrant；类型只能是 学习|生活|健身|工作。`;
   let raw=await callLLM(sys,userText,DB.chatLog().slice(-6,-1));
-  let m=raw.match(/\{[\s\S]*"tasks"[\s\S]*\}/);
-  if(!m) throw new Error('我没太理解，可以再说一遍你的拆解步骤吗？');
-  let data=JSON.parse(m[0]);
+  let data=parsePlanFromText(raw);
+  if(!data||!Array.isArray(data.tasks)) throw new Error('我没太理解，可以再说一遍你的拆解步骤吗？');
   data.reasoning=data.reasoning||'我按你的思路整理了一下，你看看 👇';
   _pendingDecomp=data;
   hideTyping();
@@ -1849,7 +1858,7 @@ function renderDecompPreview(data){
 function continueDetailDecomp(){
   if(!_lastDecompTask){appendChat('请先描述一个想完成的任务 🙏',false);return;}
   appendChat('当然可以。再补充一点信息，我会在现有框架上继续细化。',false);
-  renderDetailQuestions(_lastDecompTask.split('\n\n【用于细化计划的补充信息】')[0]);
+  renderDetailQuestions(_lastDecompTask.split('\n\n【用于细化计划的补充信息】')[0],'refine');
 }
 function applyDecomp(){
   if(!_pendingDecomp){appendChat('这个拆解方案已过期，请重新描述任务 🙏',false);return;}
