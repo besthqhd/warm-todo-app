@@ -1109,6 +1109,18 @@ body{display:flex;align-items:center;justify-content:center}
 </div>
 </div>
 
+<!-- ========== MODAL: overview task editor ========== -->
+<div class="bottom-sheet" id="sheet-overview-edit">
+<div class="sheet-content">
+<div class="sheet-handle"></div>
+<div style="font-size:18px;font-weight:700;margin-bottom:16px;text-align:center">编辑任务</div>
+<label class="form-label" for="overviewEditName">任务名称</label>
+<input class="form-input" id="overviewEditName" maxlength="80" placeholder="请输入任务名称">
+<button class="setting-save-btn" style="margin-top:20px" onclick="saveOverviewEdit()">保存修改</button>
+<button class="sheet-cancel" onclick="closeSheet('sheet-overview-edit')">取消</button>
+</div>
+</div>
+
 <!-- ========== MODAL: welcome-sheet (欢迎语弹层) ========== -->
 <div class="bottom-sheet" id="sheet-welcome">
 <div class="sheet-content">
@@ -2125,14 +2137,14 @@ function taskNodeHTML(t,depth){
       +'<span class="ov-dot '+(t.done?'on':'')+'"></span>'
       +'<span class="ov-sub-name '+(t.done?'done':'')+'">'+esc(t.name)+'</span>'
       +'<span class="ov-lv">L'+(depth+1)+'</span>'
-      +'<button aria-label="编辑任务" onclick="event.stopPropagation();editOverviewTask(\''+t.id+'\')" style="margin-left:auto;border:0;background:transparent;color:var(--primary);font-size:12px;cursor:pointer">编辑</button>'
+      +'<button type="button" aria-label="编辑任务" onclick="event.stopPropagation();openOverviewEdit(\''+t.id+'\');return false;" style="margin-left:auto;border:0;background:#E8F0EC;color:var(--primary);font-size:12px;font-weight:600;padding:7px 10px;border-radius:14px;cursor:pointer">编辑</button>'
       +urgencyMatrix(t.quadrant)+'</div>';
   }
   var st=leafStats(t);
   var pct=st.total?Math.round(st.done/st.total*100):0;
   var open=!!_ovOpen[t.id];
   return '<div class="ov-task"'+ind+'><div class="ov-task-bar" onclick="toggleOvSub(\''+t.id+'\')">'
-    +'<div class="ov-left"><span class="ov-expand" id="ovarr-'+t.id+'">'+(open?'▾':'▸')+'</span><span class="ov-name">'+esc(t.name)+'</span><span class="ov-lv">L'+(depth+1)+'</span><button aria-label="编辑任务" onclick="event.stopPropagation();editOverviewTask(\''+t.id+'\')" style="border:0;background:transparent;color:var(--primary);font-size:12px;cursor:pointer">编辑</button></div>'
+    +'<div class="ov-left"><span class="ov-expand" id="ovarr-'+t.id+'">'+(open?'▾':'▸')+'</span><span class="ov-name">'+esc(t.name)+'</span><span class="ov-lv">L'+(depth+1)+'</span><button type="button" aria-label="编辑任务" onclick="event.stopPropagation();openOverviewEdit(\''+t.id+'\');return false;" style="border:0;background:#E8F0EC;color:var(--primary);font-size:12px;font-weight:600;padding:7px 10px;border-radius:14px;cursor:pointer">编辑</button></div>'
     +'<div class="ov-right">'+ringHTML(pct,t.quadrant)+'</div></div>'
     +'<div class="ov-subs'+(open?' open':'')+'" id="ovsub-'+t.id+'">'
     +kids.map(function(k){return taskNodeHTML(k,depth+1);}).join('')
@@ -2159,12 +2171,18 @@ function toggleOvSub(id){
   var ar=document.getElementById('ovarr-'+id);if(ar)ar.textContent=open?'▾':'▸';
 }
 function toggleSub(id){var ts=DB.todos();var t=ts.find(function(x){return x.id===id;});if(t){t.done=!t.done;DB.set('todos',ts);renderOverview();renderHome();}}
-function editOverviewTask(id){
-  var tasks=DB.todos(),task=tasks.find(function(t){return t.id===id;});if(!task)return;
-  var next=prompt('修改任务名称',task.name);
-  if(next===null)return;
-  next=next.trim();if(!next){showToast('任务名称不能为空');return;}
-  task.name=next;DB.set('todos',tasks);renderOverview();renderHome();renderHabits();showToast('任务已更新');
+var _editingOverviewTaskId=null;
+function openOverviewEdit(id){
+  var task=DB.todos().find(function(t){return t.id===id;});if(!task)return;
+  _editingOverviewTaskId=id;
+  var input=document.getElementById('overviewEditName');if(input)input.value=task.name;
+  openSheet('sheet-overview-edit');setTimeout(function(){if(input)input.focus();},100);
+}
+function saveOverviewEdit(){
+  var input=document.getElementById('overviewEditName'),next=input&&input.value.trim();
+  if(!next){showToast('任务名称不能为空');return;}
+  var tasks=DB.todos(),task=tasks.find(function(t){return t.id===_editingOverviewTaskId;});if(!task)return;
+  task.name=next;DB.set('todos',tasks);closeSheet('sheet-overview-edit');renderOverview();renderHome();renderHabits();showToast('任务已更新');
 }
 
 // ===== LIVE TODAY / HABIT STATE =====
