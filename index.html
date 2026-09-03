@@ -468,6 +468,8 @@ body{display:flex;align-items:center;justify-content:center}
 .dc-node{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;color:#1A1A1A}
 .dc-dot{width:6px;height:6px;border-radius:50%;background:#5BA898;flex:none}
 .dc-name{flex:1;line-height:1.35}
+.dc-name-input{flex:1;min-width:0;padding:5px 7px;border:1px solid rgba(91,168,152,.42);border-radius:8px;background:#fff;color:var(--text-primary);font:inherit;font-size:13px;outline:none}
+.dc-name-input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(91,168,152,.12)}
 .dc-lv{font-size:10px;color:#8A857C;background:#ECE7DF;border-radius:6px;padding:1px 6px;flex:none}
 .dc-lv.dc-main{color:#fff;background:#5BA898}
 .dc-tag{font-size:10px;color:#7BA587;flex:none}
@@ -1804,13 +1806,14 @@ async function organizeUserBreakdown(task,userText){
   hideTyping();
   renderDecompPreview(data);
 }
-function decompNodeHTML(node,depth){
+var _activeDecompPreview=null;
+function decompNodeHTML(node,depth,path){
   var pad=depth*14;
   var badge=depth===0?'<span class="dc-lv dc-main">主任务</span>':'<span class="dc-lv">L'+(depth+1)+'</span>';
   var h='<div class="dc-node" style="padding-left:'+pad+'px"><span class="dc-dot"></span>'
-    +'<span class="dc-name">'+esc(node.name)+'</span>'+badge
+    +'<span class="dc-name" data-decomp-path="'+path+'">'+esc(node.name)+'</span>'+badge
     +(node.type?'<span class="dc-tag">'+esc(node.type)+'</span>':'')+'</div>';
-  (node.subtasks||[]).forEach(function(k){h+=decompNodeHTML(k,depth+1);});
+  (node.subtasks||[]).forEach(function(k,index){h+=decompNodeHTML(k,depth+1,path+'.'+index);});
   return h;
 }
 function firstActionNode(data){
@@ -1829,24 +1832,40 @@ function updateFirstStep(value){
   if(node)node.name=value;
 }
 function editFirstStep(){
-  var input=document.getElementById('firstStepInput');
+  var input=_activeDecompPreview&&_activeDecompPreview.querySelector('.first-step-input');
   if(input){input.focus();input.select();}
+}
+function decompNodeAtPath(path){
+  var node=null,parts=path.split('.');
+  for(var i=0;i<parts.length;i++){var list=i===0?(_pendingDecomp&&_pendingDecomp.tasks||[]):(node.subtasks||[]);node=list[Number(parts[i])];if(!node)return null;}
+  return node;
+}
+function editDecompTree(){
+  if(!_activeDecompPreview||!_pendingDecomp)return;
+  _activeDecompPreview.querySelectorAll('.dc-name').forEach(function(label){
+    var input=document.createElement('input');input.className='dc-name-input';input.maxLength=80;input.value=label.textContent;
+    input.oninput=function(){var node=decompNodeAtPath(label.dataset.decompPath);if(node)node.name=input.value;};
+    label.replaceWith(input);
+  });
+  var btn=_activeDecompPreview.querySelector('.edit-tree-btn');if(btn){btn.textContent='✓ 已可逐项编辑';btn.disabled=true;}
+  DB.track('ai_tree_edit_started',{});
 }
 function renderDecompPreview(data){
   var area=document.getElementById('chatArea');if(!area)return;
   var reasoning=data.reasoning||'我帮你把这个大任务拆成了几步，你看看合不合适 🌿';
-  var tree=(data.tasks||[]).map(function(t){return decompNodeHTML(t,0);}).join('');
+  var tree=(data.tasks||[]).map(function(t,index){return decompNodeHTML(t,0,''+index);}).join('');
   var first=firstActionNode(data);
   var firstStep=first&&first.name?first.name:'从最小的一步开始';
-  var div=document.createElement('div');div.className='chat-msg bot';
+  var div=document.createElement('div');div.className='chat-msg bot';_activeDecompPreview=div;
   div.innerHTML='💡 '+esc(reasoning).replace(/\n/g,'<br>')
     +'<div class="decomp-card">'+tree+'</div>'
-    +'<div class="first-step-card"><label class="first-step-label" for="firstStepInput">今天先做（可直接改成你愿意开始的一步）</label><input class="first-step-input" id="firstStepInput" maxlength="80" value="'+esc(firstStep)+'" oninput="updateFirstStep(this.value);DB.track(\'ai_first_step_edited\',{length:this.value.length})"></div>'
+    +'<div class="first-step-card"><label class="first-step-label">今天先做（可直接改成你愿意开始的一步）</label><input class="first-step-input" maxlength="80" value="'+esc(firstStep)+'" oninput="updateFirstStep(this.value);DB.track(\'ai_first_step_edited\',{length:this.value.length})"></div>'
     +'<div class="decomp-ask">你可以保留方案继续聊、改写今天第一步，或放弃后重新拆解；写入前始终由你决定。</div>'
     +'<span class="msg-time">'+timeNow()+'</span>'
     +'<div class="chat-actions">'
     +'<button class="chat-chip primary" onclick="applyDecomp()">✅ 写入待办</button>'
     +'<button class="chat-chip" onclick="editFirstStep()">✏️ 编辑第一步</button>'
+    +'<button class="chat-chip edit-tree-btn" onclick="editDecompTree()">✏️ 编辑全部步骤</button>'
     +'<button class="chat-chip" onclick="continueDetailDecomp()">✨ 继续细化</button>'
     +'<button class="chat-chip" onclick="retainDecomp()">📌 保留方案</button>'
     +'<button class="chat-chip" onclick="discardDecomp()">🗑️ 放弃方案</button>'
