@@ -1526,10 +1526,10 @@ function appendChat(text,isUser=false){
   area.scrollTop=area.scrollHeight;
   return div;
 }
-function showTyping(){
+function showTyping(label='正在思考…'){
   let area=document.getElementById('chatArea');
   let div=document.createElement('div');div.className='typing-indicator';div.id='typing';
-  div.innerHTML='<span></span><span></span><span></span>';
+  div.innerHTML='<span></span><span></span><span></span><em style="font-style:normal;margin-left:8px;font-size:12px;color:var(--text-tertiary)">'+esc(label)+'</em>';
   area.appendChild(div);area.scrollTop=area.scrollHeight;
 }
 function hideTyping(){let t=document.getElementById('typing');if(t)t.remove();}
@@ -1606,11 +1606,11 @@ function isDecomposeIntent(msg){
 // 拆解教练系统提示：让模型自行决定"先查数据"还是"直接拆解"
 const DECOMPOSE_AGENT_SYS='你是暖心Todo的"任务拆解教练"，风格温暖、像朋友。用户给你一个想完成的大任务，你需要帮ta拆成可执行的多级步骤，并自己决定最合理的思考顺序。\n\n你可以自行决定先做哪一步：\n- 如果先调用 list_todos / query_stats 了解一下用户已有的相关任务和完成情况，有助于拆得更贴合，就先查；\n- 如果任务很清晰、无需参考历史，也可以直接开始拆解。\n顺序由你判断，不要固定套路。\n\n重要规则：\n- 在真正把任务创建成待办之前，先给出你的拆解方案，并主动问用户一个问题（例如：这个任务大概什么时候要？有没有特别在意的部分？或询问"这样拆可以吗？你若已有自己的思路，告诉我我来帮你整理"）。\n- 不要调用 create_todo 去创建（创建交给用户确认后再做）。\n- 除文字说明外，必须在回复末尾附上一个 JSON 代码块描述任务树：\n```json\n{"reasoning":"你的拆解思路1-2句","tasks":[{"name":"大任务名","type":"学习|生活|健身|工作","quadrant":"重要紧急|重要不紧急|不重要紧急|不重要不紧急","subtasks":[{"name":"步骤","type":"...","quadrant":"...","subtasks":[{"name":"更细步骤","type":"...","quadrant":"..."}]}]}]}\n```\n- tasks 只放 1 个元素（大任务本身），其 subtasks 是拆出的步骤；每个节点都要有 name/type/quadrant；类型只能是 学习|生活|健身|工作。';
 // Agentic 拆解：走真正的 ReAct 循环，模型可先查数据再拆解（顺序由模型自定）
-async function agenticDecompose(userMsg){
+async function agenticDecompose(userMsg,thinkingLabel='正在根据你的目标整理计划…'){
   _lastDecompTask=userMsg;
   DB.track('ai_decomposition_requested',{goalLength:userMsg.length,route:'agent'});
   let rawPlan=null;
-  showTyping();
+  showTyping(thinkingLabel);
   try{
     const ok=await callAgent(userMsg,{
       system:DECOMPOSE_AGENT_SYS,
@@ -1706,28 +1706,44 @@ function shouldAskDetailQuestions(goal){
 function renderDetailQuestions(goal){
   _pendingDetailGoal=goal;
   DB.track('ai_detail_questions_shown',{goalLength:goal.length});
+  let kind=detailQuestionKind(goal),questions=detailQuestionsFor(kind);
   let area=document.getElementById('chatArea');if(!area)return;
   let div=document.createElement('div');div.className='chat-msg bot';
-  div.innerHTML='为了把「'+esc(goal)+'」细化成能直接写入待办的步骤，我还想了解 3 件事（都可简短填写或跳过）：'
+  div.innerHTML='为了把「'+esc(goal)+'」细化成能直接写入待办的步骤，我想再了解几件和这件事最相关的信息（都可简短填写或跳过）：'
     +'<div class="decomp-card" style="margin-top:10px">'
-    +'<label class="first-step-label" for="detailOutcome">1. 你想达到什么结果，或最晚什么时候需要完成？</label><input class="first-step-input" id="detailOutcome" maxlength="120" placeholder="例如：下周一前交出第一版简历">'
-    +'<label class="first-step-label" for="detailStartingPoint" style="margin-top:10px">2. 你现在已有的材料、进度或基础是什么？</label><input class="first-step-input" id="detailStartingPoint" maxlength="120" placeholder="例如：已有旧简历和 2 个岗位 JD">'
-    +'<label class="first-step-label" for="detailAvailability" style="margin-top:10px">3. 今天或接下来每天大约能投入多久？</label><input class="first-step-input" id="detailAvailability" maxlength="80" placeholder="例如：今晚 40 分钟，每天 1 小时">'
+    +'<label class="first-step-label" for="detailOutcome">1. '+esc(questions[0].label)+'</label><input class="first-step-input" id="detailOutcome" maxlength="120" placeholder="'+esc(questions[0].placeholder)+'">'
+    +'<label class="first-step-label" for="detailStartingPoint" style="margin-top:10px">2. '+esc(questions[1].label)+'</label><input class="first-step-input" id="detailStartingPoint" maxlength="120" placeholder="'+esc(questions[1].placeholder)+'">'
+    +'<label class="first-step-label" for="detailAvailability" style="margin-top:10px">3. '+esc(questions[2].label)+'</label><input class="first-step-input" id="detailAvailability" maxlength="80" placeholder="'+esc(questions[2].placeholder)+'">'
     +'</div><div class="chat-actions"><button class="chat-chip primary" onclick="submitDetailQuestions()">✨ 用这些信息细化</button><button class="chat-chip" onclick="skipDetailQuestions()">先给我一个框架</button></div>';
   area.appendChild(div);area.scrollTop=area.scrollHeight;
+}
+function detailQuestionKind(goal){
+  if(/求职|简历|面试|岗位|投递|作品集/.test(goal))return 'career';
+  if(/学习|考试|论文|课程|复习|读书|英语|作业/.test(goal))return 'study';
+  if(/项目|汇报|方案|客户|会议|工作|发布|需求/.test(goal))return 'work';
+  return 'life';
+}
+function detailQuestionsFor(kind){
+  var bank={
+    career:[{label:'目标岗位或最晚投递时间是什么？',placeholder:'例如：产品经理实习，下周一前投递'},{label:'你已有的材料或进度是什么？',placeholder:'例如：已有旧简历和 2 个岗位 JD'},{label:'今天或每天可投入多久？',placeholder:'例如：今晚 40 分钟，每天 1 小时'}],
+    study:[{label:'学习目标或考试/交付日期是什么？',placeholder:'例如：两周后完成期末复习'},{label:'目前学到哪里、已有何种材料？',placeholder:'例如：已学完第 3 章，有课程讲义'},{label:'可安排的学习时段是？',placeholder:'例如：工作日晚上各 1 小时'}],
+    work:[{label:'这件事的交付物和截止时间是什么？',placeholder:'例如：周五前交一版汇报 PPT'},{label:'已有资料、协作人或依赖项是什么？',placeholder:'例如：已有数据，等待运营确认口径'},{label:'你这次能投入的时间是？',placeholder:'例如：今天下午 2 小时'}],
+    life:[{label:'你想达成什么结果，或最晚何时完成？',placeholder:'例如：周末前完成搬家收纳'},{label:'目前已有的物品、预算或准备是什么？',placeholder:'例如：已买收纳箱，预算 300 元'},{label:'你能投入多久或在哪个时段做？',placeholder:'例如：今晚 30 分钟，周六半天'}]
+  };return bank[kind];
 }
 async function submitDetailQuestions(){
   if(!_pendingDetailGoal)return;
   let outcome=(document.getElementById('detailOutcome')||{}).value||'';
   let start=(document.getElementById('detailStartingPoint')||{}).value||'';
   let availability=(document.getElementById('detailAvailability')||{}).value||'';
-  let details=[['期望结果或截止时间',outcome],['当前基础/已有材料',start],['可投入时间',availability]].filter(function(x){return x[1].trim();});
+  let details=[outcome,start,availability].map(function(value,index){return {value:value,labelIndex:index};}).filter(function(x){return x.value.trim();});
   if(!details.length){appendChat('至少补充一项就能让我拆得更贴合；如果暂时没有，也可以点「先给我一个框架」。',false);return;}
-  let goal=_pendingDetailGoal;_pendingDetailGoal=null;
-  let enriched=goal+'\n\n【用于细化计划的补充信息】\n'+details.map(function(x){return '- '+x[0]+'：'+x[1].trim();}).join('\n');
+  let goal=_pendingDetailGoal,labels=detailQuestionsFor(detailQuestionKind(goal));_pendingDetailGoal=null;
+  let enriched=goal+'\n\n【用于细化计划的补充信息】\n'+details.map(function(x){return '- '+(labels[x.labelIndex]&&labels[x.labelIndex].label||'补充信息')+'：'+x.value.trim();}).join('\n');
   DB.track('ai_detail_questions_submitted',{fieldCount:details.length});
-  appendChat('收到，我会按你补充的信息把计划拆细一些。',false);
-  await agenticDecompose(enriched);
+  appendChat('收到。正在根据你补充的信息，把框架细化为可直接写入待办的步骤…',false);
+  await new Promise(function(resolve){requestAnimationFrame(resolve);});
+  await agenticDecompose(enriched,'正在结合你的补充信息细化计划…');
 }
 async function skipDetailQuestions(){
   if(!_pendingDetailGoal)return;
@@ -1817,12 +1833,18 @@ function renderDecompPreview(data){
     +'<div class="chat-actions">'
     +'<button class="chat-chip primary" onclick="applyDecomp()">✅ 写入待办</button>'
     +'<button class="chat-chip" onclick="editFirstStep()">✏️ 编辑第一步</button>'
+    +'<button class="chat-chip" onclick="continueDetailDecomp()">✨ 继续细化</button>'
     +'<button class="chat-chip" onclick="retainDecomp()">📌 保留方案</button>'
     +'<button class="chat-chip" onclick="discardDecomp()">🗑️ 放弃方案</button>'
     +'<button class="chat-chip" onclick="regenDecomp()">🔄 换个拆法</button>'
     +'</div>';
   area.appendChild(div);area.scrollTop=area.scrollHeight;
   DB.pushChat('assistant','（已给出拆解建议：'+((data.tasks&&data.tasks[0]&&data.tasks[0].name)||'')+'）');
+}
+function continueDetailDecomp(){
+  if(!_lastDecompTask){appendChat('请先描述一个想完成的任务 🙏',false);return;}
+  appendChat('当然可以。再补充一点信息，我会在现有框架上继续细化。',false);
+  renderDetailQuestions(_lastDecompTask.split('\n\n【用于细化计划的补充信息】')[0]);
 }
 function applyDecomp(){
   if(!_pendingDecomp){appendChat('这个拆解方案已过期，请重新描述任务 🙏',false);return;}
