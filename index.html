@@ -13,6 +13,15 @@ body{display:flex;align-items:center;justify-content:center}
 @media (max-height:820px){.phone-frame{transform:scale(0.85)}}
 @media (max-height:700px){.phone-frame{transform:scale(0.7)}}
 @media (max-height:600px){.phone-frame{transform:scale(0.55)}}
+/* Real-phone mode: use the full viewport while preserving the desktop preview frame. */
+@media (max-width:600px){
+  html,body{height:100%;height:100dvh;background:var(--bg);}
+  body{display:block;}
+  .phone-frame{width:100vw;height:100vh;height:100dvh;border-radius:0;box-shadow:none;transform:none!important;}
+  .bottom-nav{box-sizing:content-box;height:62px;padding-bottom:env(safe-area-inset-bottom);border-radius:0;}
+  .nav-tab{min-width:0;flex:1;padding-left:1px;padding-right:1px;font-size:9px;}
+  .fab-btn{right:24px;bottom:calc(74px + env(safe-area-inset-bottom));}
+}
 .page{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--bg);display:none;flex-direction:column;overflow:hidden}
 .page.active{display:flex}
 
