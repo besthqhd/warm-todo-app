@@ -1711,10 +1711,10 @@ function renderDetailQuestions(goal){
   let div=document.createElement('div');div.className='chat-msg bot';
   div.innerHTML='为了把「'+esc(goal)+'」细化成能直接写入待办的步骤，我想再了解几件和这件事最相关的信息（都可简短填写或跳过）：'
     +'<div class="decomp-card" style="margin-top:10px">'
-    +'<label class="first-step-label" for="detailOutcome">1. '+esc(questions[0].label)+'</label><input class="first-step-input" id="detailOutcome" maxlength="120" placeholder="'+esc(questions[0].placeholder)+'">'
-    +'<label class="first-step-label" for="detailStartingPoint" style="margin-top:10px">2. '+esc(questions[1].label)+'</label><input class="first-step-input" id="detailStartingPoint" maxlength="120" placeholder="'+esc(questions[1].placeholder)+'">'
-    +'<label class="first-step-label" for="detailAvailability" style="margin-top:10px">3. '+esc(questions[2].label)+'</label><input class="first-step-input" id="detailAvailability" maxlength="80" placeholder="'+esc(questions[2].placeholder)+'">'
-    +'</div><div class="chat-actions"><button class="chat-chip primary" onclick="submitDetailQuestions()">✨ 用这些信息细化</button><button class="chat-chip" onclick="skipDetailQuestions()">先给我一个框架</button></div>';
+    +'<label class="first-step-label">1. '+esc(questions[0].label)+'</label><input class="first-step-input detail-outcome" maxlength="120" placeholder="'+esc(questions[0].placeholder)+'">'
+    +'<label class="first-step-label" style="margin-top:10px">2. '+esc(questions[1].label)+'</label><input class="first-step-input detail-starting-point" maxlength="120" placeholder="'+esc(questions[1].placeholder)+'">'
+    +'<label class="first-step-label" style="margin-top:10px">3. '+esc(questions[2].label)+'</label><input class="first-step-input detail-availability" maxlength="80" placeholder="'+esc(questions[2].placeholder)+'">'
+    +'</div><div class="chat-actions"><button class="chat-chip primary" onclick="submitDetailQuestions(this)">✨ 用这些信息细化</button><button class="chat-chip" onclick="skipDetailQuestions()">先给我一个框架</button></div>';
   area.appendChild(div);area.scrollTop=area.scrollHeight;
 }
 function detailQuestionKind(goal){
@@ -1731,11 +1731,12 @@ function detailQuestionsFor(kind){
     life:[{label:'你想达成什么结果，或最晚何时完成？',placeholder:'例如：周末前完成搬家收纳'},{label:'目前已有的物品、预算或准备是什么？',placeholder:'例如：已买收纳箱，预算 300 元'},{label:'你能投入多久或在哪个时段做？',placeholder:'例如：今晚 30 分钟，周六半天'}]
   };return bank[kind];
 }
-async function submitDetailQuestions(){
+async function submitDetailQuestions(button){
   if(!_pendingDetailGoal)return;
-  let outcome=(document.getElementById('detailOutcome')||{}).value||'';
-  let start=(document.getElementById('detailStartingPoint')||{}).value||'';
-  let availability=(document.getElementById('detailAvailability')||{}).value||'';
+  let card=button&&button.closest('.chat-msg');
+  let outcome=(card&&card.querySelector('.detail-outcome')||{}).value||'';
+  let start=(card&&card.querySelector('.detail-starting-point')||{}).value||'';
+  let availability=(card&&card.querySelector('.detail-availability')||{}).value||'';
   let details=[outcome,start,availability].map(function(value,index){return {value:value,labelIndex:index};}).filter(function(x){return x.value.trim();});
   if(!details.length){appendChat('至少补充一项就能让我拆得更贴合；如果暂时没有，也可以点「先给我一个框架」。',false);return;}
   let goal=_pendingDetailGoal,labels=detailQuestionsFor(detailQuestionKind(goal));_pendingDetailGoal=null;
