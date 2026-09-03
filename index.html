@@ -1440,10 +1440,19 @@ function proxyHealthUrl(proxyBase){
 }
 function apiFetchErrorMessage(err){
   let msg=(err&&err.message)||'';
+  if(err&&err.name==='AbortError'){
+    return '接口检测超时，请检查手机网络、代理地址或稍后重试。';
+  }
   if(/failed to fetch|networkerror|load failed/i.test(msg)){
     return '接口跨域或不可访问，请检查 API 地址、网络或服务端 CORS 配置。';
   }
   return msg||'接口请求失败，请稍后重试。';
+}
+async function fetchWithTimeout(url,options={},timeoutMs=10000){
+  let controller=new AbortController();
+  let timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{return await fetch(url,{...options,signal:controller.signal});}
+  finally{clearTimeout(timer);}
 }
 async function updateApiStatus(){
   let s=DB.get('settings',{}),el=document.getElementById('apiStatus');
@@ -1455,7 +1464,7 @@ async function updateApiStatus(){
   try{
     // Proxy mode checks the Worker health endpoint without exposing a browser key.
     // Direct mode uses the standard OpenAI-compatible /models endpoint.
-    let r=await fetch(isProxy?proxyHealthUrl(base):base+'/models',isProxy?{}:{headers:{'Authorization':'Bearer '+s.apiKey}});
+    let r=await fetchWithTimeout(isProxy?proxyHealthUrl(base):base+'/models',isProxy?{}:{headers:{'Authorization':'Bearer '+s.apiKey}});
     if(checkId!==_apiStatusCheckId)return;
     if(!r.ok)throw new Error('接口返回 '+r.status);
     el.textContent=(isProxy?'代理可用':'接口可用')+' ('+(s.model||(isProxy?'glm-4-flash':'默认模型'))+')';el.className='api-status connected';
