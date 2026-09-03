@@ -1601,7 +1601,9 @@ var _pendingDecomp=null, _awaitOwnBreakdown=null, _pendingDetailGoal=null, _last
 function isDecomposeIntent(msg){
   return /(拆解|拆分|分解|帮我拆|拆一下|逐级|梳理一下|理一下|从何下手|无从下手)/.test(msg)
       || /(怎么|如何|怎样)(做|完成|下手|开始|推进|安排)/.test(msg)
-      || /不知道(怎么|从哪)/.test(msg);
+      || /不知道(怎么|从哪)/.test(msg)
+      // Users often state a complex goal directly, such as "准备考研".
+      || /^(准备|规划|计划).{2,}$/.test(msg.trim());
 }
 // 拆解教练系统提示：让模型自行决定"先查数据"还是"直接拆解"
 const DECOMPOSE_AGENT_SYS='你是暖心Todo的"任务拆解教练"，风格温暖、像朋友。用户给你一个想完成的大任务，你需要帮ta拆成可执行的多级步骤，并自己决定最合理的思考顺序。\n\n你可以自行决定先做哪一步：\n- 如果先调用 list_todos / query_stats 了解一下用户已有的相关任务和完成情况，有助于拆得更贴合，就先查；\n- 如果任务很清晰、无需参考历史，也可以直接开始拆解。\n顺序由你判断，不要固定套路。\n\n重要规则：\n- 在真正把任务创建成待办之前，先给出你的拆解方案，并主动问用户一个问题（例如：这个任务大概什么时候要？有没有特别在意的部分？或询问"这样拆可以吗？你若已有自己的思路，告诉我我来帮你整理"）。\n- 不要调用 create_todo 去创建（创建交给用户确认后再做）。\n- 除文字说明外，必须在回复末尾附上一个 JSON 代码块描述任务树：\n```json\n{"reasoning":"你的拆解思路1-2句","tasks":[{"name":"大任务名","type":"学习|生活|健身|工作","quadrant":"重要紧急|重要不紧急|不重要紧急|不重要不紧急","subtasks":[{"name":"步骤","type":"...","quadrant":"...","subtasks":[{"name":"更细步骤","type":"...","quadrant":"..."}]}]}]}\n```\n- tasks 只放 1 个元素（大任务本身），其 subtasks 是拆出的步骤；每个节点都要有 name/type/quadrant；类型只能是 学习|生活|健身|工作。';
@@ -1719,7 +1721,7 @@ function renderDetailQuestions(goal){
 }
 function detailQuestionKind(goal){
   if(/求职|简历|面试|岗位|投递|作品集|秋招|春招|校招|找工作|实习|应聘/.test(goal))return 'career';
-  if(/学习|考试|论文|课程|复习|读书|英语|作业/.test(goal))return 'study';
+  if(/学习|考试|考研|论文|课程|复习|读书|英语|作业/.test(goal))return 'study';
   if(/项目|汇报|方案|客户|会议|工作|发布|需求/.test(goal))return 'work';
   if(/健身|运动|跑步|减脂|增肌|训练|瑜伽|力量|体重|体脂/.test(goal))return 'fitness';
   return 'life';
