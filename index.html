@@ -1260,6 +1260,13 @@ body{display:flex;align-items:center;justify-content:center}
     </div>
     <input class="setting-input" id="settingModel" placeholder="gpt-4o-mini" value="">
   </div>
+  <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">
+    <div>
+      <div class="setting-item-label">后端代理地址（推荐）</div>
+      <div class="setting-item-desc">填写 Cloudflare Worker 地址（如 https://你的-worker.workers.dev/v1）后优先使用；浏览器不会发送 API Key。InsightLoop Worker 留空模型名时默认 glm-4-flash。</div>
+    </div>
+    <input class="setting-input" id="settingProxyBase" placeholder="https://你的-worker.workers.dev/v1" value="">
+  </div>
 </div>
 
 <div class="setting-group">
@@ -1386,10 +1393,11 @@ const DB = {
 
 // ===== SETTINGS =====
 function loadSettings(){
-  let s=DB.get('settings',{apiBase:'',apiKey:'',model:'',embedModel:'',embedBase:''});
+  let s=DB.get('settings',{apiBase:'',apiKey:'',model:'',proxyBase:'',embedModel:'',embedBase:''});
   document.getElementById('settingApiBase').value=s.apiBase||'';
   document.getElementById('settingApiKey').value=s.apiKey||'';
   document.getElementById('settingModel').value=s.model||'';
+  document.getElementById('settingProxyBase').value=s.proxyBase||'';
   document.getElementById('settingEmbedModel').value=s.embedModel||'';
   document.getElementById('settingEmbedBase').value=s.embedBase||'';
   updateStorageInfo();
@@ -1401,6 +1409,7 @@ function saveSettings(){
     apiBase:document.getElementById('settingApiBase').value.trim(),
     apiKey:document.getElementById('settingApiKey').value.trim(),
     model:document.getElementById('settingModel').value.trim(),
+    proxyBase:document.getElementById('settingProxyBase').value.trim(),
     embedModel:document.getElementById('settingEmbedModel').value.trim(),
     embedBase:document.getElementById('settingEmbedBase').value.trim()
   });
@@ -1413,6 +1422,13 @@ function updateStorageInfo(){
     '待办 '+DB.todos().length+' 条 · 习惯 '+DB.habits().length+' 条 · 存储 '+Math.round(total/1024)+' KB';
 }
 let _apiStatusCheckId=0;
+function hasProxy(s){return !!(s&&s.proxyBase);}
+function configuredBase(s){return (hasProxy(s)?s.proxyBase:(s.apiBase||'https://api.openai.com/v1')).replace(/\/$/,'');}
+function proxyHealthUrl(proxyBase){
+  let u=new URL(proxyBase);
+  u.pathname='/health';u.search='';u.hash='';
+  return u.toString();
+}
 function apiFetchErrorMessage(err){
   let msg=(err&&err.message)||'';
   if(/failed to fetch|networkerror|load failed/i.test(msg)){
@@ -1423,16 +1439,17 @@ function apiFetchErrorMessage(err){
 async function updateApiStatus(){
   let s=DB.get('settings',{}),el=document.getElementById('apiStatus');
   if(!el)return;
-  if(!s.apiKey){el.textContent='未配置';el.className='api-status';return}
+  if(!s.apiKey&&!hasProxy(s)){el.textContent='未配置';el.className='api-status';return}
   let checkId=++_apiStatusCheckId;
-  let base=(s.apiBase||'https://api.openai.com/v1').replace(/\/$/,'');
+  let base=configuredBase(s),isProxy=hasProxy(s);
   el.textContent='正在检测接口…';el.className='api-status';
   try{
-    // /models is the standard OpenAI-compatible read-only health check.
-    let r=await fetch(base+'/models',{headers:{'Authorization':'Bearer '+s.apiKey}});
+    // Proxy mode checks the Worker health endpoint without exposing a browser key.
+    // Direct mode uses the standard OpenAI-compatible /models endpoint.
+    let r=await fetch(isProxy?proxyHealthUrl(base):base+'/models',isProxy?{}:{headers:{'Authorization':'Bearer '+s.apiKey}});
     if(checkId!==_apiStatusCheckId)return;
     if(!r.ok)throw new Error('接口返回 '+r.status);
-    el.textContent='接口可用 ('+(s.model||'默认模型')+')';el.className='api-status connected';
+    el.textContent=(isProxy?'代理可用':'接口可用')+' ('+(s.model||(isProxy?'glm-4-flash':'默认模型'))+')';el.className='api-status connected';
   }catch(e){
     if(checkId!==_apiStatusCheckId)return;
     el.textContent=apiFetchErrorMessage(e);el.className='api-status error';
@@ -1445,8 +1462,8 @@ function showToast(msg){
 
 // ===== LLM CLIENT =====
 async function callLLM(systemPrompt,userMsg,history){
-  let s=DB.get('settings',{}),base=(s.apiBase||'https://api.openai.com/v1').replace(/\/$/,''),model=s.model||(base.includes('deepseek')?'deepseek-chat':'gpt-4o-mini');
-  if(!s.apiKey)throw new Error('请先在「我的→AI 设置」中配置 API 密钥');
+  let s=DB.get('settings',{}),proxy=hasProxy(s),base=configuredBase(s),model=s.model||(proxy?'glm-4-flash':(base.includes('deepseek')?'deepseek-chat':'gpt-4o-mini'));
+  if(!proxy&&!s.apiKey)throw new Error('请先在「我的→AI 设置」中配置 API 密钥，或填写后端代理地址');
 
   const _msgs=[{role:'system',content:systemPrompt}];
   if(history&&history.length){history.forEach(function(h){if(h&&h.content)_msgs.push({role:h.role==='user'?'user':'assistant',content:h.content});});}
@@ -1456,7 +1473,7 @@ async function callLLM(systemPrompt,userMsg,history){
   try{
     let r=await fetch(base+'/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.apiKey},
+      headers:proxy?{'Content-Type':'application/json'}:{'Content-Type':'application/json','Authorization':'Bearer '+s.apiKey},
       body:JSON.stringify(body)
     });
     if(!r.ok)throw new Error('API 返回错误 '+r.status+' '+r.statusText);
