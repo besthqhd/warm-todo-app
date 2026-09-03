@@ -1718,9 +1718,10 @@ function renderDetailQuestions(goal){
   area.appendChild(div);area.scrollTop=area.scrollHeight;
 }
 function detailQuestionKind(goal){
-  if(/求职|简历|面试|岗位|投递|作品集/.test(goal))return 'career';
+  if(/求职|简历|面试|岗位|投递|作品集|秋招|春招|校招|找工作|实习|应聘/.test(goal))return 'career';
   if(/学习|考试|论文|课程|复习|读书|英语|作业/.test(goal))return 'study';
   if(/项目|汇报|方案|客户|会议|工作|发布|需求/.test(goal))return 'work';
+  if(/健身|运动|跑步|减脂|增肌|训练|瑜伽|力量|体重|体脂/.test(goal))return 'fitness';
   return 'life';
 }
 function detailQuestionsFor(kind){
@@ -1728,6 +1729,7 @@ function detailQuestionsFor(kind){
     career:[{label:'目标岗位或最晚投递时间是什么？',placeholder:'例如：产品经理实习，下周一前投递'},{label:'你已有的材料或进度是什么？',placeholder:'例如：已有旧简历和 2 个岗位 JD'},{label:'今天或每天可投入多久？',placeholder:'例如：今晚 40 分钟，每天 1 小时'}],
     study:[{label:'学习目标或考试/交付日期是什么？',placeholder:'例如：两周后完成期末复习'},{label:'目前学到哪里、已有何种材料？',placeholder:'例如：已学完第 3 章，有课程讲义'},{label:'可安排的学习时段是？',placeholder:'例如：工作日晚上各 1 小时'}],
     work:[{label:'这件事的交付物和截止时间是什么？',placeholder:'例如：周五前交一版汇报 PPT'},{label:'已有资料、协作人或依赖项是什么？',placeholder:'例如：已有数据，等待运营确认口径'},{label:'你这次能投入的时间是？',placeholder:'例如：今天下午 2 小时'}],
+    fitness:[{label:'你的目标是什么，想在什么时候看到变化？',placeholder:'例如：3 个月减脂 5 公斤，体能更好'},{label:'目前的运动基础、身体限制或可用条件是什么？',placeholder:'例如：刚开始，只有瑜伽垫，膝盖不适'},{label:'每周能安排几次、每次多长时间？',placeholder:'例如：每周 3 次，每次 40 分钟'}],
     life:[{label:'你想达成什么结果，或最晚何时完成？',placeholder:'例如：周末前完成搬家收纳'},{label:'目前已有的物品、预算或准备是什么？',placeholder:'例如：已买收纳箱，预算 300 元'},{label:'你能投入多久或在哪个时段做？',placeholder:'例如：今晚 30 分钟，周六半天'}]
   };return bank[kind];
 }
