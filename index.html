@@ -1136,6 +1136,17 @@ body{display:flex;align-items:center;justify-content:center}
 </div>
 </div>
 
+<div class="bottom-sheet" id="sheet-task-rename">
+<div class="sheet-content">
+<div class="sheet-handle"></div>
+<div style="font-size:18px;font-weight:700;margin-bottom:16px;text-align:center">重命名任务对话</div>
+<label class="form-label" for="taskConversationRename">对话名称</label>
+<input class="form-input" id="taskConversationRename" maxlength="24" placeholder="例如：2027 秋招准备">
+<button class="setting-save-btn" style="margin-top:20px" onclick="saveTaskConversationRename()">保存名称</button>
+<button class="sheet-cancel" onclick="closeSheet('sheet-task-rename')">取消</button>
+</div>
+</div>
+
 <!-- ========== MODAL: welcome-sheet (欢迎语弹层) ========== -->
 <div class="bottom-sheet" id="sheet-welcome">
 <div class="sheet-content">
@@ -2205,8 +2216,21 @@ function ensureTaskConversation(goal){
 }
 function openTaskConversations(){
   var list=document.getElementById('taskConversationList'),activeId=DB.activeTaskSessionId(),all=DB.taskSessions();
-  if(list)list.innerHTML=all.length?all.map(function(s){return '<button class="sheet-option '+(s.id===activeId?'selected':'')+'" style="width:100%;background:transparent;border-left:0;border-right:0;border-top:0;text-align:left" onclick="switchTaskConversation(\''+s.id+'\')"><span class="check">✓</span><span style="flex:1">'+esc(s.title)+'</span><span style="font-size:11px;color:var(--text-tertiary)">'+(s.messages||[]).length+' 条</span></button>';}).join(''):'<div style="text-align:center;color:var(--text-tertiary);padding:12px">还没有任务对话</div>';
+  if(list)list.innerHTML=all.length?all.map(function(s){return '<div class="sheet-option '+(s.id===activeId?'selected':'')+'" style="width:100%;background:transparent"><span class="check">✓</span><button type="button" style="flex:1;background:transparent;border:0;text-align:left;color:inherit;font:inherit;cursor:pointer" onclick="switchTaskConversation(\''+s.id+'\')">'+esc(s.title)+' <span style="font-size:11px;color:var(--text-tertiary)">· '+(s.messages||[]).length+' 条</span></button><button type="button" style="border:0;background:transparent;color:var(--primary);font-size:12px;font-family:inherit;cursor:pointer;padding:6px" onclick="openTaskConversationRename(\''+s.id+'\')">重命名</button></div>';}).join(''):'<div style="text-align:center;color:var(--text-tertiary);padding:12px">还没有任务对话</div>';
   openSheet('sheet-task-conversations');
+}
+var _renamingTaskConversationId=null;
+function openTaskConversationRename(id){
+  var session=DB.taskSessions().find(function(s){return s.id===id;});if(!session)return;
+  _renamingTaskConversationId=id;
+  var input=document.getElementById('taskConversationRename');if(input)input.value=session.title;
+  closeSheet('sheet-task-conversations');openSheet('sheet-task-rename');setTimeout(function(){if(input)input.focus();},100);
+}
+function saveTaskConversationRename(){
+  var input=document.getElementById('taskConversationRename'),title=input&&input.value.trim();
+  if(!title){showToast('请输入对话名称');return;}
+  var session=DB.taskSessions().find(function(s){return s.id===_renamingTaskConversationId;});if(!session)return;
+  session.title=title.slice(0,24);DB.saveTaskSession(session);updateTaskConversationName();closeSheet('sheet-task-rename');showToast('对话已重命名');
 }
 function switchTaskConversation(id){
   var session=DB.taskSessions().find(function(s){return s.id===id;});if(!session)return;
