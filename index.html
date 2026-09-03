@@ -452,6 +452,10 @@ body{display:flex;align-items:center;justify-content:center}
 :root{--ring-track:#ECE7DF;--divider:#EDE8E0;--accent-gray:#8A857C;--accent-green:#7BA587}
 
 .decomp-card{margin:8px 0;padding:10px 12px;background:#F7F6F3;border:1px solid #EDE8E0;border-radius:14px}
+.first-step-card{margin:10px 0 8px;padding:10px 12px;background:#E8F5F1;border:1px solid rgba(91,168,152,.25);border-radius:14px}
+.first-step-label{display:block;margin-bottom:6px;font-size:12px;font-weight:700;color:#3E7E70}
+.first-step-input{width:100%;padding:7px 9px;border:1px solid rgba(91,168,152,.35);border-radius:9px;background:#fff;color:var(--text-primary);font:inherit;font-size:13px;outline:none}
+.first-step-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(91,168,152,.12)}
 .dc-node{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;color:#1A1A1A}
 .dc-dot{width:6px;height:6px;border-radius:50%;background:#5BA898;flex:none}
 .dc-name{flex:1;line-height:1.35}
@@ -1360,6 +1364,9 @@ const DB = {
   chatLog(){return this.get('chatlog',[])},
   pushChat(role,content){let l=this.chatLog();l.push({role:role,content:content,ts:Date.now()});if(l.length>40)l=l.slice(-40);this.set('chatlog',l)},
   clearChat(){this.set('chatlog',[])},
+  // Anonymous local-only research events. Never store the user's task text.
+  events(){return this.get('events',[])},
+  track(event,meta={}){let es=this.events();es.push({event:event,ts:new Date().toISOString(),meta:meta});if(es.length>200)es=es.slice(-200);this.set('events',es)},
   // stats helpers
   completionRate(days=7){
     let c=this.completions(),total=0,done=0;
@@ -1529,6 +1536,7 @@ const DECOMPOSE_AGENT_SYS='你是暖心Todo的"任务拆解教练"，风格温�
 // Agentic 拆解：走真正的 ReAct 循环，模型可先查数据再拆解（顺序由模型自定）
 async function agenticDecompose(userMsg){
   _lastDecompTask=userMsg;
+  DB.track('ai_decomposition_requested',{goalLength:userMsg.length,route:'agent'});
   let rawPlan=null;
   showTyping();
   try{
@@ -1539,8 +1547,9 @@ async function agenticDecompose(userMsg){
       onAssistant:function(raw){ if(!rawPlan)rawPlan=extractPlan(raw); }
     });
     hideTyping();
-    if(!ok){ await proposeDecompose(userMsg); return; } // 服务端不可达 -> 本地兜底
-    if(rawPlan){ _pendingDecomp=rawPlan; renderDecompPreview(rawPlan); }
+    if(!ok){ await proposeDecompose(userMsg,{skipRequestEvent:true}); return; } // 服务端不可达 -> 本地兜底
+    if(rawPlan){ _pendingDecomp=rawPlan; DB.track('ai_decomposition_returned',{parsed:true,route:'agent'}); renderDecompPreview(rawPlan); }
+    else DB.track('ai_decomposition_returned',{parsed:false,route:'agent'});
   }catch(e){ hideTyping(); appendChat('拆解时出了点问题 😅<br>'+e.message,false); }
 }
 function extractPlan(raw){
@@ -1615,8 +1624,9 @@ ${await buildMemoryAsync(msg)}
 }
 
 // ===== FEATURE 5: interactive task decomposition =====
-async function proposeDecompose(userMsg){
+async function proposeDecompose(userMsg,opts={}){
   _lastDecompTask=userMsg;
+  if(!opts.skipRequestEvent)DB.track('ai_decomposition_requested',{goalLength:userMsg.length,route:'fallback'});
   let sys=`你是暖心Todo的"任务拆解教练"。用户给你一个想完成的大任务，你要帮ta拆成可执行的多级步骤。
 只返回如下JSON（不要任何额外文字/解释/代码块标记）：
 {"reasoning":"你的拆解思路，1-2句，温暖鼓励的语气","tasks":[{"name":"大任务本身的简洁名称","type":"学习|生活|健身|工作","quadrant":"重要紧急|重要不紧急|不重要紧急|不重要不紧急","subtasks":[{"name":"步骤","type":"...","quadrant":"...","subtasks":[{"name":"更细步骤","type":"...","quadrant":"..."}]}]}]}
@@ -1631,6 +1641,7 @@ async function proposeDecompose(userMsg){
   if(!m) throw new Error('我没太理解这个任务，能说得更具体一点吗？');
   let data=JSON.parse(m[0]);
   _pendingDecomp=data;
+  DB.track('ai_decomposition_returned',{parsed:true,route:'fallback'});
   hideTyping();
   renderDecompPreview(data);
 }
@@ -1658,18 +1669,42 @@ function decompNodeHTML(node,depth){
   (node.subtasks||[]).forEach(function(k){h+=decompNodeHTML(k,depth+1);});
   return h;
 }
+function firstActionNode(data){
+  var found=null;
+  function walk(node){
+    if(found||!node)return;
+    var kids=node.subtasks||[];
+    if(!kids.length){found=node;return;}
+    kids.forEach(walk);
+  }
+  (data.tasks||[]).forEach(walk);
+  return found;
+}
+function updateFirstStep(value){
+  var node=firstActionNode(_pendingDecomp||{});
+  if(node)node.name=value;
+}
+function editFirstStep(){
+  var input=document.getElementById('firstStepInput');
+  if(input){input.focus();input.select();}
+}
 function renderDecompPreview(data){
   var area=document.getElementById('chatArea');if(!area)return;
   var reasoning=data.reasoning||'我帮你把这个大任务拆成了几步，你看看合不合适 🌿';
   var tree=(data.tasks||[]).map(function(t){return decompNodeHTML(t,0);}).join('');
+  var first=firstActionNode(data);
+  var firstStep=first&&first.name?first.name:'从最小的一步开始';
   var div=document.createElement('div');div.className='chat-msg bot';
   div.innerHTML='💡 '+esc(reasoning).replace(/\n/g,'<br>')
     +'<div class="decomp-card">'+tree+'</div>'
-    +'<div class="decomp-ask">这样拆你觉得可以吗？如果你已经有自己的拆解方案，或有别的思路，直接告诉我，我来帮你整理 ✨</div>'
+    +'<div class="first-step-card"><label class="first-step-label" for="firstStepInput">今天先做（可直接改成你愿意开始的一步）</label><input class="first-step-input" id="firstStepInput" maxlength="80" value="'+esc(firstStep)+'" oninput="updateFirstStep(this.value);DB.track(\'ai_first_step_edited\',{length:this.value.length})"></div>'
+    +'<div class="decomp-ask">你可以保留方案继续聊、改写今天第一步，或放弃后重新拆解；写入前始终由你决定。</div>'
     +'<span class="msg-time">'+timeNow()+'</span>'
     +'<div class="chat-actions">'
-    +'<button class="chat-chip primary" onclick="applyDecomp()">✅ 采纳并创建</button>'
-    +'<button class="chat-chip" onclick="askOwnIdeas()">✏️ 我有自己的思路</button>'
+    +'<button class="chat-chip primary" onclick="applyDecomp()">✅ 写入待办</button>'
+    +'<button class="chat-chip" onclick="editFirstStep()">✏️ 编辑第一步</button>'
+    +'<button class="chat-chip" onclick="retainDecomp()">📌 保留方案</button>'
+    +'<button class="chat-chip" onclick="discardDecomp()">🗑️ 放弃方案</button>'
     +'<button class="chat-chip" onclick="regenDecomp()">🔄 换个拆法</button>'
     +'</div>';
   area.appendChild(div);area.scrollTop=area.scrollHeight;
@@ -1679,9 +1714,22 @@ function applyDecomp(){
   if(!_pendingDecomp){appendChat('这个拆解方案已过期，请重新描述任务 🙏',false);return;}
   var created=[];
   (_pendingDecomp.tasks||[]).forEach(function(t){createTodoTree(t,null,created);});
+  DB.track('ai_decomposition_written',{taskCount:created.length,hasFirstStep:created.length>0});
   _pendingDecomp=null;
   if(typeof renderOverview==='function')renderOverview();
   appendBotWithActions('✅ 已按这个方案创建了 '+created.length+' 个任务（含各级子任务），去「总览」页就能看到完整的任务树啦 🌿\n\n完成它们时记得回来打个卡，我为你加油 💪');
+}
+function retainDecomp(){
+  if(!_pendingDecomp)return;
+  DB.track('ai_decomposition_retained',{});
+  appendChat('已保留这份方案。你可以继续补充约束或想法，准备好后再写入待办。',false);
+  var el=document.getElementById('aiInput');if(el)el.focus();
+}
+function discardDecomp(){
+  if(!_pendingDecomp)return;
+  DB.track('ai_decomposition_discarded',{});
+  _pendingDecomp=null;
+  appendChat('好的，这份方案已放弃，没有写入任何待办。你想换个目标或换种拆法时，随时告诉我。',false);
 }
 function askOwnIdeas(){
   _awaitOwnBreakdown=_lastDecompTask||'这个任务';
