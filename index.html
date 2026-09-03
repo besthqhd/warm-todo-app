@@ -1429,6 +1429,7 @@ const DB = {
   activeTaskSessionId(){return this.get('activeTaskSessionId',null)},
   setActiveTaskSession(id){this.set('activeTaskSessionId',id)},
   saveTaskSession(session){let all=this.taskSessions(),i=all.findIndex(function(x){return x.id===session.id;});if(i>-1)all[i]=session;else all.unshift(session);if(all.length>12)all=all.slice(0,12);this.set('taskSessions',all)},
+  deleteTaskSession(id){this.set('taskSessions',this.taskSessions().filter(function(x){return x.id!==id;}));if(this.activeTaskSessionId()===id)this.setActiveTaskSession(null)},
   activeTaskSession(){return this.taskSessions().find(function(x){return x.id===this.activeTaskSessionId();}.bind(this))||null},
   pushTaskChat(role,content){let s=this.activeTaskSession();if(!s)return;s.messages=s.messages||[];s.messages.push({role:role,content:content,ts:Date.now()});if(s.messages.length>40)s.messages=s.messages.slice(-40);this.saveTaskSession(s)},
   // Anonymous local-only research events. Never store the user's task text.
@@ -2216,7 +2217,7 @@ function ensureTaskConversation(goal){
 }
 function openTaskConversations(){
   var list=document.getElementById('taskConversationList'),activeId=DB.activeTaskSessionId(),all=DB.taskSessions();
-  if(list)list.innerHTML=all.length?all.map(function(s){return '<div class="sheet-option '+(s.id===activeId?'selected':'')+'" style="width:100%;background:transparent"><span class="check">✓</span><button type="button" style="flex:1;background:transparent;border:0;text-align:left;color:inherit;font:inherit;cursor:pointer" onclick="switchTaskConversation(\''+s.id+'\')">'+esc(s.title)+' <span style="font-size:11px;color:var(--text-tertiary)">· '+(s.messages||[]).length+' 条</span></button><button type="button" style="border:0;background:transparent;color:var(--primary);font-size:12px;font-family:inherit;cursor:pointer;padding:6px" onclick="openTaskConversationRename(\''+s.id+'\')">重命名</button></div>';}).join(''):'<div style="text-align:center;color:var(--text-tertiary);padding:12px">还没有任务对话</div>';
+  if(list)list.innerHTML=all.length?all.map(function(s){return '<div class="sheet-option '+(s.id===activeId?'selected':'')+'" style="width:100%;background:transparent"><span class="check">✓</span><button type="button" style="flex:1;background:transparent;border:0;text-align:left;color:inherit;font:inherit;cursor:pointer" onclick="switchTaskConversation(\''+s.id+'\')">'+esc(s.title)+' <span style="font-size:11px;color:var(--text-tertiary)">· '+(s.messages||[]).length+' 条</span></button><button type="button" style="border:0;background:transparent;color:var(--primary);font-size:12px;font-family:inherit;cursor:pointer;padding:6px" onclick="openTaskConversationRename(\''+s.id+'\')">重命名</button><button type="button" style="border:0;background:transparent;color:var(--accent-red);font-size:12px;font-family:inherit;cursor:pointer;padding:6px" onclick="deleteTaskConversation(\''+s.id+'\')">删除</button></div>';}).join(''):'<div style="text-align:center;color:var(--text-tertiary);padding:12px">还没有任务对话</div>';
   openSheet('sheet-task-conversations');
 }
 var _renamingTaskConversationId=null;
@@ -2231,6 +2232,13 @@ function saveTaskConversationRename(){
   if(!title){showToast('请输入对话名称');return;}
   var session=DB.taskSessions().find(function(s){return s.id===_renamingTaskConversationId;});if(!session)return;
   session.title=title.slice(0,24);DB.saveTaskSession(session);updateTaskConversationName();closeSheet('sheet-task-rename');showToast('对话已重命名');
+}
+function deleteTaskConversation(id){
+  var session=DB.taskSessions().find(function(s){return s.id===id;});if(!session)return;
+  if(!confirm('删除「'+session.title+'」及其对话记录？此操作无法恢复。'))return;
+  var wasActive=DB.activeTaskSessionId()===id;DB.deleteTaskSession(id);
+  if(wasActive){_pendingDecomp=null;_pendingDetailGoal=null;_lastDecompTask='';var area=document.getElementById('chatArea');if(area){area.innerHTML='';area.setAttribute('data-restored','0');}updateTaskConversationName();restoreChat();}
+  openTaskConversations();showToast('任务对话已删除');
 }
 function switchTaskConversation(id){
   var session=DB.taskSessions().find(function(s){return s.id===id;});if(!session)return;
