@@ -1412,10 +1412,31 @@ function updateStorageInfo(){
   document.getElementById('storageInfo').textContent=
     '待办 '+DB.todos().length+' 条 · 习惯 '+DB.habits().length+' 条 · 存储 '+Math.round(total/1024)+' KB';
 }
-function updateApiStatus(){
+let _apiStatusCheckId=0;
+function apiFetchErrorMessage(err){
+  let msg=(err&&err.message)||'';
+  if(/failed to fetch|networkerror|load failed/i.test(msg)){
+    return '接口跨域或不可访问，请检查 API 地址、网络或服务端 CORS 配置。';
+  }
+  return msg||'接口请求失败，请稍后重试。';
+}
+async function updateApiStatus(){
   let s=DB.get('settings',{}),el=document.getElementById('apiStatus');
+  if(!el)return;
   if(!s.apiKey){el.textContent='未配置';el.className='api-status';return}
-  el.textContent='已连接 ('+(s.model||'默认模型')+')';el.className='api-status connected';
+  let checkId=++_apiStatusCheckId;
+  let base=(s.apiBase||'https://api.openai.com/v1').replace(/\/$/,'');
+  el.textContent='正在检测接口…';el.className='api-status';
+  try{
+    // /models is the standard OpenAI-compatible read-only health check.
+    let r=await fetch(base+'/models',{headers:{'Authorization':'Bearer '+s.apiKey}});
+    if(checkId!==_apiStatusCheckId)return;
+    if(!r.ok)throw new Error('接口返回 '+r.status);
+    el.textContent='接口可用 ('+(s.model||'默认模型')+')';el.className='api-status connected';
+  }catch(e){
+    if(checkId!==_apiStatusCheckId)return;
+    el.textContent=apiFetchErrorMessage(e);el.className='api-status error';
+  }
 }
 function showToast(msg){
   let t=document.createElement('div');t.className='setting-toast show';t.textContent=msg;
@@ -1441,7 +1462,7 @@ async function callLLM(systemPrompt,userMsg,history){
     if(!r.ok)throw new Error('API 返回错误 '+r.status+' '+r.statusText);
     let j=await r.json();
     return j.choices?.[0]?.message?.content||'(无返回内容)';
-  }catch(e){throw e;}
+  }catch(e){throw new Error(apiFetchErrorMessage(e));}
 }
 
 // ===== CHAT UI =====
